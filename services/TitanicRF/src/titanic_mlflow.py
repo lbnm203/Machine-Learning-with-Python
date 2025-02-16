@@ -1,12 +1,16 @@
 import mlflow
 import pandas as pd
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
+
+from mlflow.models import infer_signature
+
 
 # Bật MLflow để theo dõi thí nghiệm
 exp_id = mlflow.set_experiment("Titanic_Data_Processing")
@@ -95,6 +99,8 @@ def main_mlflow():
         print(" Đã chia thành công file train-valid-test")
 
         # 9. Huấn luyện mô hình Random Forest với Cross Validation
+        # mlflow.sklearn.autolog()
+
         rf_model = RandomForestClassifier(
             n_estimators=100, max_depth=10, min_samples_leaf=5, random_state=42)
 
@@ -115,6 +121,8 @@ def main_mlflow():
         # Kết quả Huấn luyện mô hình trên tập train và kiểm thử trên tập validation
         rf_model.fit(X_train, y_train)
         y_train_pred = rf_model.predict(X_train)
+        signature = infer_signature(X_train, y_train)
+
         train_accuracy = accuracy_score(y_train, y_train_pred)
         print(f"[INFO] Accuracy trên tập train: {train_accuracy:.4f}")
         mlflow.log_metric("train_accuracy", train_accuracy)
@@ -128,6 +136,15 @@ def main_mlflow():
         test_accuracy = accuracy_score(y_test, y_test_pred)
         print(f"[INFO] Accuracy trên tập test: {test_accuracy:.4f}")
         mlflow.log_metric("test_accuracy", test_accuracy)
+
+        # 10. Lưu mô hình đã huấn luyện
+        # mlflow.sklearn.log_model(rf_model, "RandomForestModel")
+        mlflow.sklearn.log_model(
+            sk_model=rf_model,
+            artifact_path="sklearn-model",
+            signature=signature,
+            registered_model_name="RandomForestModel",
+        )
 
         print(" Đã hoàn thành huấn luyện mô hình Random Forest và ghi log vào MLflow")
 
