@@ -213,16 +213,17 @@ def display_run_list(runs):
     })
     st.dataframe(df_runs)
 
+    # experiment_name = "Titanic_Data_Processing"
+
 
 def main():
     st.title(" ✨ Xử Lý Dữ Liệu Titanic Kết Hợp Huấn Luyện Trên Mô Hình Random Forest")
 
     mlflow.set_tracking_uri("mlruns")
-    experiment_name = "Titanic_Data_Processing"
-    mlflow.set_experiment(experiment_name)
+    mlflow.set_experiment("Titanic_Data_Processing")
 
     client = mlflow.tracking.MlflowClient()
-    experiment = client.get_experiment_by_name(experiment_name)
+    experiment = client.get_experiment_by_name("Titanic_Data_Processing")
     if experiment:
         experiment_id = experiment.experiment_id
         runs = client.search_runs(experiment_id, order_by=[
