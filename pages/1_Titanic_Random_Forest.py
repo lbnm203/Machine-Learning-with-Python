@@ -219,8 +219,7 @@ def main():
 
     mlflow.set_tracking_uri("mlruns")
     experiment_name = "Titanic_Data_Processing"
-    mlflow.set_tracking_uri("mlruns")
-    mlflow.set_experiment("Titanic_Experiment")
+    mlflow.set_experiment(experiment_name)
 
     client = mlflow.tracking.MlflowClient()
     experiment = client.get_experiment_by_name(experiment_name)
