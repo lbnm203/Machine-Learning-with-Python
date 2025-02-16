@@ -107,6 +107,7 @@ def main_mlflow():
         mlflow.log_param("n_estimators", 100)
         mlflow.log_param("max_depth", 10)
         mlflow.log_param("min_samples_leaf", 5)
+        mlflow.log_param("k_fold", 5)
 
         scores = cross_val_score(
             rf_model, X_train, y_train, cv=5, scoring='accuracy')
