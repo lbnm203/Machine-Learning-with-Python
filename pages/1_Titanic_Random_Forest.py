@@ -5,6 +5,7 @@ import mlflow.tracking
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from PIL import Image
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -14,9 +15,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
 
 
-# Load dữ liệu từ file CSV
-def load_dataset(file_path):
-    return pd.read_csv(file_path)
+# # Load dữ liệu từ file CSV
+# def load_dataset(file_path):
+#     return pd.read_csv(file_path)
 
 
 # def get_mlflow_runs(experiment_name):
@@ -205,39 +206,67 @@ def load_dataset(file_path):
 # if __name__ == "__main__":
 #     main()
 
+# Load dữ liệu từ file CSV
+def load_dataset(file_path):
+    return pd.read_csv(file_path)
+
 
 def display_best_run():
     st.markdown("---")
     st.write("### Mô tả các bước thực hiện:")
     st.markdown("""
-    - **1. Load dataset từ file tải lên** 
-    - **2. Kiểm tra missing values** 
-    - **3. Điền giá trị thiếu** 
-    - **4. Encode các biến phân loại** 
-    - **5. Loại bỏ các cột không cần thiết** 
-    - **6. Chuẩn hóa dữ liệu số** 
-    - **7. Chia tập dữ liệu thành train (70%), valid (15%), test (15%)** 
-    - **8. Huấn luyện mô hình Random Forest với Cross Validation** 
+    - **1. Load dataset từ file tải lên**
+    - **2. Tiền xử lý dữ liệu**
+        - Kiểm tra missing values
+        - Điền giá trị thiếu
+        - Encode các biến phân loại
+        - Loại bỏ các cột không cần thiết
+        - Chuẩn hóa dữ liệu số
+    - **3. Chia tập dữ liệu thành** 
+        - Train (70%)
+        - Validation (15%)
+        - Test (15%)
+    - **4. Huấn luyện mô hình Random Forest với Cross Validation** 
+        - Sử dụng Cross Validation (k-fold) để đánh giá hiệu suất mô hình trên nhiều tập con.
+    - **5. Đánh giá mô hình**
+                
     """)
+
+    process = Image.open("./services/TitanicRF/result/flow_process.png")
+    st.image(process, caption="Minh họa quá trình thực hiện",
+             use_column_width=True)
 
     st.markdown("---")
     st.markdown("""
     #### **1. Load dataset từ file tải lên** 
     """)
     df = load_dataset("./services/TitanicRF/data/titanic.csv")
-    st.dataframe(df.head())
+    st.dataframe(df.head(10))
+
+    st.write("##### Thống kê dữ liệu:")
+    st.write(df.describe())
 
     st.markdown("---")
     st.markdown("""
-    #### **2. Kiểm tra missing values** 
+    #### **2. Kiểm tra missing values và dữ liệu bị trùng lặp** 
     """)
-    st.write(df.isnull().sum())
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("##### Missing values:")
+        missing_values = df.isnull().sum()
+        st.write(missing_values)
+
+    with col2:
+        st.write("##### Duplicate values:")
+        duplicated_data = df.duplicated().sum()
+        st.write(duplicated_data)
+
+    # st.write(df.isnull().sum())
 
     st.markdown("---")
     st.markdown("""
     #### **3. Điền giá trị thiếu** 
     """)
-    # df.fillna(df.median(), inplace=True)
     df['Age'].fillna(df['Age'].median(), inplace=True)
     df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
     df.drop(columns=['Cabin'], inplace=True)
@@ -319,7 +348,8 @@ def display_best_run():
     st.write("##### Tham số mô hình:")
     st.markdown(f"- **n_estimators:** 100")
     st.markdown(f"- **max_depth:** 10")
-    st.markdown(f"- **min_samples_leaf:** 5")
+    st.markdown(f"- **min_samples_leaf:** 10")
+    st.markdown(f"- **k-fold:** 5")
     st.markdown(f"- **random_state:** 42")
 
     st.markdown("---")
