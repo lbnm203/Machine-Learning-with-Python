@@ -9,7 +9,6 @@ from PIL import Image
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
@@ -219,11 +218,17 @@ def display_run_list(runs):
 def main():
     st.title(" ✨ Xử Lý Dữ Liệu Titanic Kết Hợp Huấn Luyện Trên Mô Hình Random Forest")
 
-    mlflow.set_tracking_uri("mlruns")
-    mlflow.set_experiment("Titanic_Data_Processing")
+    mlflow.set_tracking_uri("./mlruns")
+    # mlflow.set_experiment("Titanic_Data_Processing")
 
     client = mlflow.tracking.MlflowClient()
     experiment = client.get_experiment_by_name("Titanic_Data_Processing")
+
+    if experiment is None:
+        mlflow.create_experiment("Titanic_Data_Processing")
+
+    mlflow.set_experiment("Titanic_Data_Processing")
+
     if experiment:
         experiment_id = experiment.experiment_id
         runs = client.search_runs(experiment_id, order_by=[
