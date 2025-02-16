@@ -234,7 +234,7 @@ def display_best_run():
 
     process = Image.open("./services/TitanicRF/result/flow_process.png")
     st.image(process, caption="Minh họa quá trình thực hiện",
-             use_column_width=True)
+             use_container_width=True)
 
     st.markdown("---")
     st.markdown("""
