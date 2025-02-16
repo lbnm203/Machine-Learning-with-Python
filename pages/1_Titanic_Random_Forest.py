@@ -20,13 +20,13 @@ def load_dataset(file_path):
     return pd.read_csv(file_path)
 
 
-def get_mlflow_runs(experiment_name):
-    client = mlflow.tracking.MlflowClient()
-    experiment = client.get_experiment_by_name(experiment_name)
-    if experiment:
-        experiment_id = experiment.experiment_id
-        return client.search_runs(experiment_id, order_by=["metrics.val_accuracy DESC"])
-    return None
+# def get_mlflow_runs(experiment_name):
+#     client = mlflow.tracking.MlflowClient()
+#     experiment = client.get_experiment_by_name(experiment_name)
+#     if experiment:
+#         experiment_id = experiment.experiment_id
+#         return client.search_runs(experiment_id, order_by=["metrics.val_accuracy DESC"])
+#     return None
 
 
 def display_best_run(best_run):
@@ -216,17 +216,38 @@ def display_run_list(runs):
 
 def main():
     st.title(" ✨ Xử Lý Dữ Liệu Titanic Kết Hợp Huấn Luyện Trên Mô Hình Random Forest")
+
     mlflow.set_tracking_uri("mlruns")
     experiment_name = "Titanic_Data_Processing"
-    runs = get_mlflow_runs(experiment_name)
+    mlflow.set_tracking_uri("mlruns")
+    mlflow.set_experiment("Titanic_Experiment")
 
-    if not runs:
-        st.error("Không tìm thấy thí nghiệm MLflow")
-        return
+    client = mlflow.tracking.MlflowClient()
+    experiment = client.get_experiment_by_name(experiment_name)
+    if experiment:
+        experiment_id = experiment.experiment_id
+        runs = client.search_runs(experiment_id, order_by=[
+                                  "metrics.val_accuracy DESC"])
+        if not runs:
+            st.error("Không tìm thấy thí nghiệm MLflow")
+        else:
+            st.success("Kết nối thành công MLflow")
+            display_best_run(runs[0])
+            plot_accuracy_graph(runs)
+            display_run_list(runs)
+    return None
 
-    display_best_run(runs[0])
-    plot_accuracy_graph(runs)
-    display_run_list(runs)
+    # # mlflow.set_tracking_uri("mlruns")
+    # # experiment_name = "Titanic_Data_Processing"
+    # runs = get_mlflow_runs(experiment_name)
+
+    # if not runs:
+    #     st.error("Không tìm thấy thí nghiệm MLflow")
+    #     return
+
+    # display_best_run(runs[0])
+    # plot_accuracy_graph(runs)
+    # display_run_list(runs)
 
 
 if __name__ == "__main__":
