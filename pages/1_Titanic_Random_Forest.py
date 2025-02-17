@@ -390,7 +390,7 @@ def display_best_run():
     st.markdown(f"- **n_estimators:** 100")
     st.markdown(f"- **max_depth:** 10")
     st.markdown(f"- **min_samples_leaf:** 10")
-    st.markdown(f"- **k-fold:** 5")
+    # st.markdown(f"- **k-fold:** 5")
     st.markdown(f"- **random_state:** 42")
 
     st.markdown("---")
