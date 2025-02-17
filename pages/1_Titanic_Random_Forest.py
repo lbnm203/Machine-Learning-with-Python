@@ -306,7 +306,7 @@ def display_best_run():
 
     st.markdown("---")
     st.markdown("""
-    #### **3. Điền giá trị thiếu**
+    #### **3. Điền giá trị thiếu [Age]**
     """)
     df['Age'].fillna(df['Age'].median(), inplace=True)
     df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
@@ -407,6 +407,8 @@ def display_best_run():
     st.write(
         f"- **Cross-validation Accuracy:** {cross_valid_avg_accuracy:.4f}")
     st.markdown("---")
+
+    st.markdown("#### 9. Kết quả")
 
     # Hiển thị biểu đồ accuracy Cross-validation qua từng fold
     fig, ax = plt.subplots()
