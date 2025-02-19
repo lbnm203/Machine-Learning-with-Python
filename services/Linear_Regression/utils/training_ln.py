@@ -96,7 +96,7 @@ def training(df):
         with col2:
             st.metric("Cross-Validation R²", f"{np.mean(cv_r2_scores):.4f}")
             st.metric(
-                "Test MSE", f"{mean_squared_error(y_test, y_pred, squared=False):.4f}")
+                "Test MSE", f"{mean_squared_error(y_test, y_pred):.4f}")
 
         st.success("Model trained successfully!")
 # def training(df):
