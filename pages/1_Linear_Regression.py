@@ -22,14 +22,14 @@ from services.Linear_Regression.utils.theory_ln import theory_linear
 from services.Linear_Regression.utils.demo_st import demo_app
 
 # Khởi tạo MLflow
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
-# mlflow.create_experiment("Titanic_Survival_Prediction")
-mlflow.set_experiment("Titanic_Survival_Prediction")
+# mlflow.set_tracking_uri("http://127.0.0.1:5000")
+# # mlflow.create_experiment("Titanic_Survival_Prediction")
+# mlflow.set_experiment("Titanic_Survival_Prediction")
 
 
 # @st.cache_resource
 def main():
-    st.title("Titanic Survival Prediction with MLflow Tracking")
+    st.title("Titanic Survival Prediction with Linear Regression")
 
     url = "./services/TitanicRF/data/titanic.csv"
     data = pd.read_csv(url)
