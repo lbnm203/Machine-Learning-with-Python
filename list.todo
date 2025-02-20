@@ -1,3 +1,33 @@
 - Titanic RandomForest
     ☐ Mô tả bài toán RandomForest
+<<<<<<< HEAD
     
+=======
+    ☐ Minh họa CrossValidation (lý thuyết + hình)
+        + 
+        + Select k-fold
+    ☐ Thiếu cột Thống kê ()
+    ☐ Load dữ liệu
+    ☐ Thống kê dữ liệu
+    ☐ Thêm (option select) train/val/test --> Results
+    ☐ Thêm select Tham số mô hình --> Tham số tốt nhất 
+    ☐ Thêm select Tham số mô hình --> Tham số tốt nhất
+        + Result {kết quả}
+    ☐  Link mlflow vào streamlit
+    
+    ☐ Hiển thị được quá trình logging-tracking trên streamlit
+        + Truy vấn được 
+
+--------------------------------------------------------------
+
+- Linear Regression 
+    + Mô tả bài toán Linear Regression
+    + 1. Load dữ liệu
+    + 2. Chia dữ liệu train/val/test
+    + 3. Huấn Luyện và đánh giá
+        - Simple
+        - Multiple
+        - Polynomial
+
+    + 4. Demo (Predict)
+>>>>>>> b54ad80dbd6340c91e297b9368c305865be0c514
