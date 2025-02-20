@@ -19,15 +19,16 @@ def preprocess_data(df):
     # Drop 3 đặc trưng Ticket, Cabin, Name
     df.drop(columns=['Ticket', 'Cabin', 'Name'], inplace=True)
 
-    # 3. Chuẩn hóa các cột số
-    scaler = StandardScaler()
-    numerical_features = ['Age', 'Fare']
-    df[numerical_features] = scaler.fit_transform(df[numerical_features])
-
     # 4. Encode cho các biến phân loại
     df['Embarked'] = df['Embarked'].map(
         {'S': 1, 'C': 2, 'Q': 3}).astype('Int64')
     df["Sex"] = df["Sex"].map({'male': 0, 'female': 1}).astype('Int64')
+
+    # 3. Chuẩn hóa các cột số
+    scaler = StandardScaler()
+    numerical_features = ['Age', 'Fare', 'Pclass', 'SibSp', 'Parch', 'Sex', 'Embarked', 'PassengerId', 'Survived']
+    df[numerical_features] = scaler.fit_transform(df[numerical_features])
+
 
     # features = [col for col in df.columns if col != 'Survived']
     # target = 'Survived'
