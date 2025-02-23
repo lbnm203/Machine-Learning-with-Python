@@ -4,117 +4,132 @@ from PIL import Image
 
 def theory_linear():
     st.markdown("## Simple Linear Regression")
-    st.image("./services/Linear_Regression/assest/simple_lr.png")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("## Simple Linear Regression")
+        st.image("./services/Linear_Regression/assest/simple_lr.png")
 
-    st.write("""
-        Hồi quy tuyến tính đơn giản là hồi quy tuyến tính với một biến độc lập, còn được gọi là biến giải thích,
-        và một biến phụ thuộc, còn được gọi là biến đáp ứng. Trong hồi quy tuyến tính đơn giản, biến phụ thuộc
-        là liên tục. Hồi quy tuyến tính đơn giản giúp đưa ra dự đoán và hiểu được mối quan hệ giữa một biến độc
-        lập và một biến phụ thuộc.
+    with col2:
+        st.write("""
+            Hồi quy tuyến tính đơn giản là hồi quy tuyến tính với một biến độc lập, còn được gọi là biến giải thích,
+            và một biến phụ thuộc, còn được gọi là biến đáp ứng. Trong hồi quy tuyến tính đơn giản, biến phụ thuộc
+            là liên tục. Hồi quy tuyến tính đơn giản giúp đưa ra dự đoán và hiểu được mối quan hệ giữa một biến độc
+            lập và một biến phụ thuộc.
 
-    """)
+        """)
 
-    st.markdown("### Công thức")
-    st.markdown("""
-        Hồi quy tuyến tính đơn được biểu diễn dưới dạng 1 đường thẳng:
-    """)
+        st.markdown("### Công thức")
+        st.markdown("""
+            Hồi quy tuyến tính đơn được biểu diễn dưới dạng 1 đường thẳng:
+        """)
 
-    st.latex(r"""
-        y = w_0 + w_1 x + \epsilon
-    """)
-    st.markdown("""
-        - y là biến phụ thuộc
-        - $w_0$ là bias (intercept)
-        - $w_1$ là hằng số (slope)
-        - x là biến độc lập
+        st.latex(r"""
+            y = w_0 + w_1 x + \epsilon
+        """)
+        st.markdown("""
+            - y là biến phụ thuộc
+            - $w_0$ là bias (intercept)
+            - $w_1$ là hằng số (slope)
+            - x là biến độc lập
 
-    """)
-
+        """)
+    st.write("---")
     st.markdown("""## Multiple Linear Regression""")
-    st.image("./services/Linear_Regression/assest/mutiple_lr.png")
+    col1, col2 = st.columns(2)
+    with col2:
+        st.image("./services/Linear_Regression/assest/mutiple_lr.png")
 
-    st.markdown(
-        """Hồi quy tuyến tính bội tương tự như mô hình hồi quy tuyến tính đơn, chúng dùng để dự đoán một giá trị
-        của biến phụ thuộc y dựa vào 2 hoặc nhiều biến độc lập x1, x2, x3…xn.""")
+    with col1:
+        st.markdown(
+            """Hồi quy tuyến tính bội tương tự như mô hình hồi quy tuyến tính đơn, chúng dùng để dự đoán một giá trị
+            của biến phụ thuộc y dựa vào 2 hoặc nhiều biến độc lập x1, x2, x3…xn.""")
 
-    st.markdown("""### Công thức""")
-    st.latex(r"""
-        y = w_0 + w_1x_1 + w_2x_2 + \dots + w_nx_n
-    """)
+        st.markdown("""### Công thức""")
+        st.latex(r"""
+            y = w_0 + w_1x_1 + w_2x_2 + \dots + w_nx_n
+        """)
 
-    st.markdown(r"""
-        Trong đó:
-        - $y$: Biến phụ thuộc
+        st.markdown(r"""
+            Trong đó:
+            - $y$: Biến phụ thuộc
 
-        - $w_0$: Bias (intercept)
+            - $w_0$: Bias (intercept)
 
-        - $w_1$, $w_2$, $w_3$,... $w_n$: Hng số (slope)
+            - $w_1$, $w_2$, $w_3$,... $w_n$: Hng số (slope)
 
-        - $x_1$, $x_2$, $x_3$,... $x_n$: Biến độc lập
-    """)
+            - $x_1$, $x_2$, $x_3$,... $x_n$: Biến độc lập
+        """)
 
+    st.write("---")
     st.markdown("""## Polynomial Regression:""")
 
-    st.image("./services/Linear_Regression/assest/poly_lr.png")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("./services/Linear_Regression/assest/poly_lr.png")
+    with col2:
+        st.markdown("""
+        Polynomial Regression là thuật toán hồi quy đa thức, nó giống như thuật toán hồi quy tuyến tính, sử dụng mối quan hệ
+        giữa các biến độc lập x và biến phụ thuộc y được biểu diễn dưới dạng đa thức bậc n, để tìm cách tốt nhất
+        vẽ một đường qua các điểm dữ liệu sao cho tối ưu và phù hợp nhất.
 
-    st.markdown("""
-    Polynomial Regression là thuật toán hồi quy đa thức, nó giống như thuật toán hồi quy tuyến tính, sử dụng mối quan hệ
-    giữa các biến độc lập x và biến phụ thuộc y được biểu diễn dưới dạng đa thức bậc n, để tìm cách tốt nhất
-    vẽ một đường qua các điểm dữ liệu sao cho tối ưu và phù hợp nhất.
+        """)
 
-    """)
+        st.markdown("""### Công thức""")
+        st.latex(r"""
+            y = w_0 + w_1x + w_2x^2 + w_3x^3 + \dots + w_nx^n
 
-    st.markdown("""### Công thức""")
-    st.latex(r"""
-        y = w_0 + w_1x + w_2x^2 + w_3x^3 + \dots + w_nx^n
+        """)
 
-    """)
+        st.markdown(r"""
+            Trong đó:
+            - $y$: Biến phụ thuộc
 
-    st.markdown(r"""
-        Trong đó:
-        - $y$: Biến phụ thuộc
+            - $w_0$: Bias (intercept)
 
-        - $w_0$: Bias (intercept)
+            - $w_1$, $w_2$, $w_3$,... $w_n$: Hng số (slope)
 
-        - $w_1$, $w_2$, $w_3$,... $w_n$: Hng số (slope)
+            - $x_1$, $x_2$, $x_3$,... $x_n$: Biến độc lập
 
-        - $x_1$, $x_2$, $x_3$,... $x_n$: Biến độc lập
+            - $d$: bậc của đa thức
+        """)
 
-        - $d$: bậc của đa thức
-    """)
+    st.write("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""### Hàm Mất Mát (Loss Function)""")
+        st.latex(
+            r""" MSE = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y_i})^2""")
 
-    st.markdown("""### Hàm Mất Mát (Loss Function)""")
-    st.latex(
-        r""" MSE = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y_i})^2""")
+        st.markdown(r"""
+            Trong đó:
+            - $n$: Số lượng điểm dữ liệu.
+            - $y_i$: Giá trị thực tế của biến phụ thuộc.
+            - $\hat{y}_i$: Giá trị dự đoán từ mô hình.
+        """)
 
-    st.markdown(r"""
-        Trong đó:
-        - $n$: Số lượng điểm dữ liệu.
-        - $y_i$: Giá trị thực tế của biến phụ thuộc.
-        - $\hat{y}_i$: Giá trị dự đoán từ mô hình.
-    """)
+    with col2:
+        st.markdown("""### Gradient Descent""")
 
-    st.markdown("""### Gradient Descent""")
+        st.markdown(r"""
+        Các bước trong Gradient Descent
 
-    st.markdown(r"""
-    Các bước trong Gradient Descent
+    - Khởi tạo các trọng số $w_0$, $w_1$, $w_2$, ..., $w_n$ với giá trị bất kỳ.
 
-- Khởi tạo các trọng số $w_0$, $w_1$, $w_2$, ..., $w_n$ với giá trị bất kỳ.
+    - Tính gradient của MSE đối với từng trọng số.
 
-- Tính gradient của MSE đối với từng trọng số.
+    - Cập nhật $w_0$, $w_1$, $w_2$ theo quy tắc của thuật toán Gradient Descent.
 
-- Cập nhật $w_0$, $w_1$, $w_2$ theo quy tắc của thuật toán Gradient Descent.
+        """)
+        st.latex(
+            r"""w_i = w_i - \eta \frac{\partial J}{\partial w_0} """)
 
-    """)
-    st.latex(
-        r"""w_i = w_i - \eta \frac{\partial J}{\partial w_0} """)
+        st.markdown(r"""
+    - Lặp lại bước 2 và 3 cho đến khi gradient gần bằng 0 hoặc không
+    thay đổi đáng kể nữa.
 
-    st.markdown(r"""
-- Lặp lại bước 2 và 3 cho đến khi gradient gần bằng 0 hoặc không
-thay đổi đáng kể nữa.
+        """)
 
-    """)
-
+    st.write("---")
     st.markdown("### Đánh giá mô hình:")
     st.markdown("""
                 

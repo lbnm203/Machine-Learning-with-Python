@@ -27,67 +27,38 @@ from services.Linear_Regression.utils.demo_st import demo_app
 # mlflow.set_experiment("Titanic_Survival_Prediction")
 
 
-# @st.cache_resource
 def main():
     st.title("Titanic Survival Prediction with Linear Regression")
 
-    url = "./services/TitanicRF/data/titanic.csv"
-    data = pd.read_csv(url)
+    uploaded_file = st.file_uploader(
+        "📂 Chọn file dữ liệu (.csv hoặc .txt)", type=["csv", "txt"])
 
-    data_org, data_preprocess, theory, train_process, demo = st.tabs(
-        ["Dữ liệu gốc", "Dữ liệu được tiền xử lý", "Thông tin", "Huấn luyện", "Demo"])
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file, delimiter=",")
+        st.success("📂 Tải file thành công!")
 
-    with data_org:
-        visualize_org_data(data)
+        data_org, data_preprocess, theory, train_process, demo = st.tabs(
+            ["Dữ liệu gốc", "Dữ liệu được tiền xử lý", "Thông tin", "Huấn luyện", "Demo"])
 
-    with data_preprocess:
-        st.markdown("### ⚙️ Quá trình tiền xử lý dữ liệu")
-        st.markdown("""
-            - Xử lý các giá trị thiếu
-                - **Age**: Điền giá trị trung bình cho các giá trị bị thiếu.
-                - **Fare**: Điền giá trị trung bình cho các giá trị bị thiếu.
-                - **Embarked**: Điền giá trị phổ biến nhất (mode) cho các giá trị bị thiếu.
+        # ------------- Show Data Origin ------------------
+        with data_org:
+            visualize_org_data(data)
 
-            - Mã hóa kiểu dữ liệu dạng chữ về dạng số để mô hình có thể xử lý:
-                - **Sex**: Chuyển đổi giá trị của cột Sex từ dạng categorical sang dạng numerical ```(0: male, 1: female)```.
-                - **Embarked**: tương tự ở phần này ta sẽ tiến hành chuyển các giá trị về dạng numerical ```(1: S, 2: C, 3: Q)```
+        # ------------- Preprocess Data ------------------
+        with data_preprocess:
+            data = preprocess_data(data)
 
-            - Tiến hành drop 3 đặc trưng **Cabin, Ticket, Name** vì sau khi thống kê cho thấy đặc trưng **Ticket** và **Name** không ảnh hưởng hay không giúp ích đến kết quả dự đoán,
-            bỏ qua đặc trưng **Cabin** vì giá trị thiếu chiếm đến ~80% (687/891)
+        # ------------- Theoretical Background ------------------
+        with theory:
+            theory_linear()
 
-            - Chuẩn hóa các dữ liệu ['Age'], ['Fare'], ['Pclass'], ['SibSp'], ['Parch'] cùng một khoảng giá trị tương ứng trong tập dữ liệu để phù hợp cho việc tính toán của mô hình
-        """)
+        # ------------- Training Linear Regression ------------------
+        with train_process:
+            training(data)
 
-        X, y, preprocessor, df = preprocess_data(data)
-        st.markdown("### 📝 Tập dữ liệu sau tiền xử lý")
-        st.dataframe(df)
-
-    with theory:
-        theory_linear()
-
-    # Chia dữ liệu
-    with train_process:
-        training(df)
-
-    # Phần demo dự đoán
-    with demo:
-        model_type = st.selectbox("Select Model Type", [
-                                  "Multiple Regression", "Polynomial Regression"])
-
-        if model_type == "Polynomial Regression":
-            degree = 2  # Define the degree variable
-            model = Pipeline([
-                ('preprocessor', preprocessor),
-                ('poly', PolynomialFeatures(degree=degree, interaction_only=False)),
-                ('regressor', LinearRegression())
-            ])
-        else:
-            model = Pipeline([
-                ('preprocessor', preprocessor),
-                ('regressor', LinearRegression())
-            ])
-
-        demo_app(X, y, model, model_type)
+        # ------------- Demo Application ------------------
+        with demo:
+            demo_app(data)
 
 
 if __name__ == "__main__":
