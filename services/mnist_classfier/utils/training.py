@@ -9,8 +9,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-import os
-from dotenv import load_dotenv
 
 # 🌟 Kết nối với DagsHub MLflow
 DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
