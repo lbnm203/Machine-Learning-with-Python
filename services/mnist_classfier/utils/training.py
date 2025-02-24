@@ -3,11 +3,33 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import mlflow
+from mlflow.tracking import MlflowClient
 
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
+import os
+
+# 🌟 Cấu hình DAGsHub MLflow Tracking URI
+DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
+mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+
+# Đăng nhập bằng username và token DAGsHub
+os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
+os.environ["MLFLOW_TRACKING_PASSWORD"] = "97381e3199c0220c4031154eae996daaa0451ac6"
+
+# 📝 Kiểm tra danh sách các experiment có sẵn
+client = MlflowClient()
+experiments = client.search_experiments()
+
+# Tạo một experiment mới nếu chưa tồn tại
+experiment_name = "MNIST_Classification"
+if not any(exp.name == experiment_name for exp in experiments):
+    mlflow.create_experiment(experiment_name)
+    st.success(f"Experiment '{experiment_name}' đã được tạo!")
+else:
+    st.info(f"Experiment '{experiment_name}' đã tồn tại.")
 
 
 def train_process(X, y):
@@ -105,15 +127,16 @@ def train_process(X, y):
             depths = range(1, 21)
             accuracies = []
             for depth in depths:
-                model = DecisionTreeClassifier(max_depth=depth)
+                model = DecisionTreeClassifier(max_depth=max_depth)
                 model.fit(X_train, y_train)
                 y_temp_pred = model.predict(X_test)
                 temp_acc = accuracy_score(y_test, y_temp_pred)
                 accuracies.append(temp_acc)
 
-            accuracy_df = pd.DataFrame(
-                {"Độ sâu": depths, "Độ chính xác": accuracies})
-            st.line_chart(accuracy_df.set_index("Độ sâu"))
+            # st.write("Độ chính xác qua từng độ sâu ")
+            # accuracy_df = pd.DataFrame(
+            #     {"Độ sâu": depths, "Độ chính xác": accuracies})
+            # st.line_chart(accuracy_df.set_index("Độ sâu"))
 
         # st.success(f"✅ Độ chính xác: {temp_acc:.4f}")
 
