@@ -183,3 +183,8 @@ def train_process(X, y):
         model_names = [model["name"] for model in st.session_state["models"]]
         # # Hiển thị tên các mô hình trong một d
         # st.write(", ".join(model_names))
+
+        st.success("Mô hình đã lưu trên MLflow!")
+
+        st.markdown(
+            f"🔗 [Truy cập MLflow UI]({st.session_state['mlflow_url']})")
