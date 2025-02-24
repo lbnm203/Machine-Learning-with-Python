@@ -9,11 +9,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
+import os
 
 # 🌟 Kết nối với DagsHub MLflow
 DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
 st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
 mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
+os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
 # 📝 Kiểm tra danh sách các experiment có sẵn
 client = MlflowClient()
