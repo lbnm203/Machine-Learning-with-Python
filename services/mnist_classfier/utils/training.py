@@ -10,26 +10,25 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 import os
+from dotenv import load_dotenv
 
-# 🌟 Cấu hình DAGsHub MLflow Tracking URI
+# 🌟 Kết nối với DagsHub MLflow
 DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
+st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
 mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
-
-# Đăng nhập bằng username và token DAGsHub
-os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
-os.environ["MLFLOW_TRACKING_PASSWORD"] = "97381e3199c0220c4031154eae996daaa0451ac6"
 
 # 📝 Kiểm tra danh sách các experiment có sẵn
 client = MlflowClient()
 experiments = client.search_experiments()
-
-# Tạo một experiment mới nếu chưa tồn tại
 experiment_name = "MNIST_Classification"
+
 if not any(exp.name == experiment_name for exp in experiments):
     mlflow.create_experiment(experiment_name)
     st.success(f"Experiment '{experiment_name}' đã được tạo!")
 else:
     st.info(f"Experiment '{experiment_name}' đã tồn tại.")
+
+mlflow.set_experiment(experiment_name)
 
 
 def train_process(X, y):
@@ -184,7 +183,7 @@ def train_process(X, y):
         # # Hiển thị tên các mô hình trong một d
         # st.write(", ".join(model_names))
 
-        st.success("Mô hình đã lưu trên MLflow!")
+        st.success("Lưu thành công!")
 
         st.markdown(
-            f"🔗 [Truy cập MLflow UI]({st.session_state['mlflow_url']})")
+            f"🔗 [Truy cập MLflow UI để xem mô hình]({st.session_state['mlflow_url']})")
