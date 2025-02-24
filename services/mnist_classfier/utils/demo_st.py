@@ -32,10 +32,10 @@ def load_model(path):
 def demo_app():
     st.write("## Demo APP")
     models = {
-        "SVM Linear": "./services/mnist_classfier/models/svm_mnist_linear.joblib",
-        "SVM Poly": "./services/mnist_classfier/models/svm_mnist_poly.joblib",
-        "SVM Sigmoid": "./services/mnist_classfier/models/svm_mnist_sigmoid.joblib",
-        "SVM RBF": "./services/mnist_classfier/models//svm_mnist_rbf.joblib",
+        "SVM với Linear": "./services/mnist_classfier/models/svm_mnist_linear.joblib",
+        "SVM với RBF": "./services/mnist_classfier/models//svm_mnist_rbf.joblib",
+        "SVM với Poly": "./services/mnist_classfier/models/svm_mnist_poly.joblib",
+        "SVM với Sigmoid": "./services/mnist_classfier/models/svm_mnist_sigmoid.joblib",
     }
 
     # Lấy tên mô hình từ session_state
