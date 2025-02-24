@@ -81,7 +81,7 @@ def train_process(X, y):
         - **Tham số mô hình:**  
             - **max_depth**: Độ sâu tối đa của cây.  
                 - **Giá trị nhỏ**: Tránh overfitting nhưng có thể underfitting.  
-                - **Giá trị lớn**: Cây có thể học tốt hơn nhưng dễ bị overfitting.  
+                - **Giá trị lớn**: Dễ bị overfitting vì khó học được các mẫu phức tạp trong dữ liệu 
         """)
 
         max_depth = st.slider("max_depth", 1, 20, 5)
@@ -89,7 +89,7 @@ def train_process(X, y):
 
     elif model_choice == "SVM":
         st.markdown("""
-        - **Tham số cần chọn:**  
+        - **Tham số mô hình:**  
             - **C (Regularization)**: Hệ số điều chỉnh độ phạt lỗi.  
                 - **C nhỏ**: Mô hình đơn giản hơn, chấp nhận nhiều lỗi hơn.  
                 - **C lớn**: Mô hình cố gắng phân loại chính xác mọi điểm, nhưng dễ bị overfitting.  
@@ -110,7 +110,7 @@ def train_process(X, y):
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
             acc = accuracy_score(y_test, y_pred)
-            st.success(f"✅ Độ chính xác: {acc:.4f}")
+            st.success(f"Độ chính xác trên Testing: {acc:.4f}")
 
             mlflow.log_param("model", model_choice)
             if model_choice == "Decision Tree":
@@ -122,7 +122,7 @@ def train_process(X, y):
             mlflow.log_metric("accuracy", acc)
             mlflow.sklearn.log_model(model, model_choice.lower())
 
-            st.success("📌 Mô hình đã được lưu trên MLflow!")
+            st.success("Lưu tham số vào MLflow thành công!")
 
         if model_choice == "Decision Tree":
             depths = range(1, 21)
@@ -185,7 +185,7 @@ def train_process(X, y):
         # # Hiển thị tên các mô hình trong một d
         # st.write(", ".join(model_names))
 
-        st.success("Lưu thành công!")
+        # st.success("Lưu thành công!")
 
         st.markdown(
-            f"🔗 [Truy cập MLflow UI để xem mô hình]({st.session_state['mlflow_url']})")
+            f"🔗 [Truy cập MLflow UI MNIST_Classification để xem tham số]({st.session_state['mlflow_url']})")
