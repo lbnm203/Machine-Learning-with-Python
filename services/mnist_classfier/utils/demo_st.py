@@ -20,7 +20,7 @@ def preprocess_canvas_image(canvas_result):
     return None
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_data(allow_output_mutation=True)
 def load_model(path):
     try:
         return joblib.load(path)
