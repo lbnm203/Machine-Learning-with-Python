@@ -5,3 +5,5 @@ matplotlib
 seaborn
 scikit-learn
 mlflow
+streamlit_drawable_canvas
+dagshub
