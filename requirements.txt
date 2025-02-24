@@ -8,3 +8,4 @@ mlflow
 streamlit_drawable_canvas
 dagshub
 opencv-python
+libgl1-mesa-glx
