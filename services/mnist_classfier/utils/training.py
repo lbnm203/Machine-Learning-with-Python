@@ -10,33 +10,21 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 import os
+from sklearn.model_selection import cross_val_score
 
-# 🌟 Kết nối với DagsHub MLflow
-DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
 
-if "mlflow_url" not in st.session_state:
-    st.session_state["mlflow_url"] = DAGSHUB_MLFLOW_URI
+def mlflow_input():
+    DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
+    mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+    st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
+    os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
-mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
-
-os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
-os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
-
-# 📝 Kiểm tra danh sách các experiment có sẵn
-client = MlflowClient()
-experiments = client.search_experiments()
-experiment_name = "MNIST_Classification"
-
-if not any(exp.name == experiment_name for exp in experiments):
-    mlflow.create_experiment(experiment_name)
-    st.success(f"Experiment '{experiment_name}' đã được tạo!")
-else:
-    st.info(f"Experiment '{experiment_name}' đã tồn tại.")
-
-mlflow.set_experiment(experiment_name)
+    mlflow.set_experiment("MNIST_Classification")
 
 
 def train_process(X, y):
+    mlflow_input()
     st.write("## ⚙️ Quá trình huấn luyện")
 
     total_samples = X.shape[0]
@@ -45,34 +33,63 @@ def train_process(X, y):
     num_samples = st.slider("Chọn số lượng ảnh để train:",
                             1000, total_samples, 10000)
 
+    st.session_state.total_samples = num_samples
     # Thanh kéo chọn tỷ lệ Train/Test
-    test_size = st.slider("Chọn tỷ lệ test:", 0.1, 0.5, 0.2)
+    test_size = st.slider("Chọn % dữ liệu Test", 10, 50, 20)
+    val_size = st.slider("Chọn % dữ liệu Validation", 0, 50,
+                         10)  # Xác định trước khi sử dụng
 
-    X_selected, y_selected = X[:num_samples], y[:num_samples]
+    remaining_size = 100 - test_size  # Sửa lỗi: Sử dụng test_size thay vì train_size
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_selected, y_selected, test_size=test_size, random_state=42)
+    # Chọn số lượng ảnh theo yêu cầu
+    X_selected, _, y_selected, _ = train_test_split(
+        X, y, train_size=num_samples, stratify=y, random_state=42
+    )
 
-    # Lưu vào session_state để sử dụng sau
-    st.session_state["X_train"] = X_train
-    st.session_state["y_train"] = y_train
-    st.session_state["X_test"] = X_test
-    st.session_state["y_test"] = y_test
+    # Chia train/test theo tỷ lệ đã chọn
+    stratify_option = y_selected if len(np.unique(y_selected)) > 1 else None
+    X_train_full, X_test, y_train_full, y_test = train_test_split(
+        X_selected, y_selected, test_size=test_size/100, stratify=stratify_option, random_state=42
+    )
+
+    # Chia train/val theo tỷ lệ đã chọn
+    stratify_option = y_train_full if len(
+        np.unique(y_train_full)) > 1 else None
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train_full, y_train_full, test_size=val_size / remaining_size,
+        stratify=stratify_option, random_state=42
+    )
+
+    # Lưu vào session_state
+    st.session_state.X_train = X_train
+    st.session_state.X_val = X_val
+    st.session_state.X_test = X_test
+    st.session_state.y_train = y_train
+    st.session_state.y_val = y_val
+    st.session_state.y_test = y_test
+    st.session_state.test_size = X_test.shape[0]
+    st.session_state.val_size = X_val.shape[0]
+    st.session_state.train_size = X_train.shape[0]
 
     if "X_train" in st.session_state:
-        X_train = st.session_state["X_train"]
-        # st.write(X_train.dtype)
-        y_train = st.session_state["y_train"]
-        X_test = st.session_state["X_test"]
-        y_test = st.session_state["y_test"]
-    else:
-        st.error("⚠️ Chưa có dữ liệu! Hãy chia dữ liệu trước.")
-        return
+        X_train = st.session_state.X_train
+        X_val = st.session_state.X_val
+        X_test = st.session_state.X_test
+        y_train = st.session_state.y_train
+        y_val = st.session_state.y_val
+        y_test = st.session_state.y_test
 
-    st.write(f'Training: {X_train.shape[0]} - Testing: {y_test.shape[0]}')
+    # st.write(f'Training: {X_train.shape[0]} - Testing: {y_test.shape[0]}')
 
     X_train = X_train.reshape(-1, 28 * 28) / 255.0
     X_test = X_test.reshape(-1, 28 * 28) / 255.0
+
+    table_size = pd.DataFrame({
+        'Dataset': ['Train', 'Validation', 'Test'],
+        'Kích thước (%)': [remaining_size - val_size, val_size, test_size],
+        'Số lượng mẫu': [X_train.shape[0], X_val.shape[0], X_test.shape[0]]
+    })
+    st.write(table_size)
 
     st.write("---")
 
@@ -108,12 +125,26 @@ def train_process(X, y):
         kernel = st.selectbox("Kernel", ["linear", "rbf", "poly", "sigmoid"])
         model = SVC(C=C, kernel=kernel)
 
+    n_folds = st.slider("Chọn số folds Cross-Validation:",
+                        min_value=2, max_value=10, value=3)
+
     if st.button("Huấn luyện mô hình"):
-        with mlflow.start_run():
+        with mlflow.start_run(run_name=f"Train_{st.session_state['run_name']}"):
+            mlflow.log_param("test_size", st.session_state.test_size)
+            mlflow.log_param("val_size", st.session_state.val_size)
+            mlflow.log_param("train_size", st.session_state.train_size)
+            mlflow.log_param("num_samples", st.session_state.total_samples)
+
+            cv_scores = cross_val_score(model, X_train, y_train, cv=n_folds)
+            mean_cv_score = cv_scores.mean()
+            std_cv_score = cv_scores.std()
+
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
             acc = accuracy_score(y_test, y_pred)
             st.success(f"Độ chính xác trên Testing: {acc:.4f}")
+            st.success(
+                f"Độ chính xác trung bình khi Cross-Validation: {mean_cv_score:.4f}                                                     ")
 
             mlflow.log_param("model", model_choice)
             if model_choice == "Decision Tree":
@@ -122,7 +153,9 @@ def train_process(X, y):
                 mlflow.log_param("C", C)
                 mlflow.log_param("kernel", kernel)
 
-            mlflow.log_metric("accuracy", acc)
+            mlflow.log_metric("test_accuracy", acc)
+            mlflow.log_metric("cv_accuracy_mean", mean_cv_score)
+            mlflow.log_metric("cv_accuracy_std", std_cv_score)
             mlflow.sklearn.log_model(model, model_choice.lower())
 
             st.success("Lưu tham số vào MLflow thành công!")
@@ -178,6 +211,8 @@ def train_process(X, y):
 
         # # Lưu mô hình vào danh sách với tên mô hình cụ thể
         st.session_state["models"].append({"name": model_name, "model": model})
+        st.success(
+            f"Log dữ liệu **{st.session_state['models']}** thành công!")
         # st.write(f"🔹 Mô hình đã được lưu với tên: {model_name}")
         # st.write(
         #     f"Tổng số mô hình hiện tại: {len(st.session_state['models'])}")
@@ -190,5 +225,5 @@ def train_process(X, y):
 
         # st.success("Lưu thành công!")
 
-        st.markdown(
-            f"🔗 [Truy cập MLflow UI MNIST_Classification để xem tham số]({st.session_state['mlflow_url']})")
+        # st.markdown(
+        #     f"🔗 [Truy cập MLflow UI MNIST_Classification để xem tham số]({st.session_state['mlflow_url']})")

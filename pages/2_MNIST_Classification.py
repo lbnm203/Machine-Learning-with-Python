@@ -15,14 +15,15 @@ from streamlit_drawable_canvas import st_canvas
 from services.mnist_classfier.utils.theory import mnist_dataset, decision_tree_theory
 from services.mnist_classfier.utils.training import train_process
 from services.mnist_classfier.utils.demo_st import demo_app
+from services.mnist_classfier.utils.show_mlflow import show_experiment_selector
 
 
 # Streamlit UI
 def main():
     st.title("Ứng dụng phân lớp MNIST với Streamlit & MLFlow")
 
-    data_mnist, theory, train, demo = st.tabs(
-        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo"])
+    data_mnist, theory, train, demo, mlflow_p = st.tabs(
+        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo", "MLflow Tracking"])
 
     # --------------- Data MNIST ---------------
     with data_mnist:
@@ -39,6 +40,10 @@ def main():
     # --------------- DEMO MNIST ---------------
     with demo:
         demo_app()
+
+    # --------------- MLflow Tracking ---------------
+    with mlflow_p:
+        show_experiment_selector()
 
 
 if __name__ == "__main__":

@@ -21,8 +21,6 @@ from mlflow.tracking import MlflowClient
 
 
 def mlflow_input():
-    st.title(" MLflow Tracking ")
-
     DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
     mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
     st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
