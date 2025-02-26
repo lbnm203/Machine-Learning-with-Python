@@ -63,21 +63,54 @@ def process_missing_values(data):
     selected_col = st.selectbox(
         "Chọn cột cần xử lý:", missing_cols, key="missing_values")
     method = st.radio("Chọn phương pháp xử lý:", [
-                      "Mean (trung bình)", "Median (trung vị)", "Mode (giá trị phổ biến nhất)"])
+                      "Mean (trung bình)", "Median (trung vị)", "Mode (giá trị phổ biến nhất)", "Xóa giá trị thiếu"])
+
+    if data[selected_col].dtype == 'object' and method in ["Mean (trung bình)"]:
+        st.warning(
+            "❗Cột bạn đang chọn chứa dữ liệu dạng chuỗi. Hãy mã hóa thành số thứ tự để xử lý")
+
+    if data[selected_col].dtype == 'object' and method in ["Median (trung vị)"]:
+        st.warning(
+            "❗Cột bạn đang chọn chứa dữ liệu dạng chuỗi. Hãy mã hóa thành số thứ tự để xử lý")
 
     if st.button("Xử lý"):
-        if method == "Mean (trung bình)":
-            data[selected_col].fillna(
-                data[selected_col].mean(), inplace=True)
-        elif method == "Median (trung vị)":
-            data[selected_col].fillna(
-                data[selected_col].median(), inplace=True)
-        elif method == "Mode (giá trị phổ biến nhất)":
-            if not data[selected_col].mode().empty:
-                data[selected_col].fillna(
-                    data[selected_col].mode()[0], inplace=True)
-            else:
-                st.warning(f"⚠️ Không tìm thấy mode cho cột `{selected_col}`!")
+        if data[selected_col].dtype == 'object':
+            if method == "Mean (trung bình)":
+                unique_values = data[selected_col].dropna().unique()
+                encoding_map = {val: idx for idx,
+                                val in enumerate(unique_values)}
+                data[selected_col] = data[selected_col].map(encoding_map)
+                data[selected_col] = data[selected_col].fillna(
+                    data[selected_col].mean())
+
+            elif method == "Median (trung vị)":
+                unique_values = data[selected_col].dropna().unique()
+                encoding_map = {val: idx for idx,
+                                val in enumerate(unique_values)}
+                data[selected_col] = data[selected_col].map(encoding_map)
+                data[selected_col] = data[selected_col].fillna(
+                    data[selected_col].median())
+
+            elif method == "Mode (giá trị phổ biến nhất)":
+                if not data[selected_col].mode().empty:
+                    data[selected_col] = data[selected_col].fillna(
+                        data[selected_col].mode()[0])
+
+            elif method == "Xóa giá trị thiếu":
+                data = data.dropna(subset=[selected_col])
+
+        else:
+            if method == "Mean (trung bình)":
+                data[selected_col] = data[selected_col].fillna(
+                    data[selected_col].mean())
+            elif method == "Median (trung vị)":
+                data[selected_col] = data[selected_col].fillna(
+                    data[selected_col].median())
+            elif method == "Mode (giá trị phổ biến nhất)":
+                data[selected_col] = data[selected_col].fillna(
+                    data[selected_col].mode()[0])
+            elif method == "Xóa giá trị thiếu":
+                data = data.dropna(subset=[selected_col])
 
         st.session_state.data = data
         st.success(f"✅ Xử lý cột `{selected_col}` thành công!")
@@ -96,35 +129,80 @@ def convert_data_types(data):
     """)
 
     categorical_cols = data.select_dtypes(include=['object']).columns.tolist()
+
     if not categorical_cols:
         st.success("✅ Không chứa dữ liệu dạng chuỗi!")
         return data
 
     selected_col = st.selectbox(
         "Chọn cột muốn chuyển đổi:", categorical_cols, key="encode_data")
-    unique_values = data[selected_col].dropna().unique()
+    unique_values = data[selected_col].unique()
+
+    # Khởi tạo session_state nếu chưa có
+    if "text_inputs" not in st.session_state:
+        st.session_state.text_inputs = {}
+
+    if "mapping_dicts" not in st.session_state:
+        st.session_state.mapping_dicts = []
 
     mapping_dict = {}
-    if len(unique_values) < 10:
+    input_values = []  # Danh sách để kiểm tra trùng lặp
+    # has_duplicate = False  # Biến kiểm tra trùng lặp
+
+    if len(unique_values) < 5:
         for val in unique_values:
-            new_val = st.text_input(
-                f"Thay thế `{val}`:", key=f"{selected_col}_{val}")
-            if new_val.strip():
-                mapping_dict[val] = new_val
+            key = f"{selected_col}_{val}"
+            if key not in st.session_state.text_inputs:
+                st.session_state.text_inputs[key] = ""
 
-        if st.button("Chuyển đổi"):
+            new_val = st.text_input(f"Nhập giá trị thay thế `{val}`:",
+                                    key=key,
+                                    value=st.session_state.text_inputs[key])
 
-            data[selected_col] = data[selected_col].map(
-                lambda x: mapping_dict.get(x, x))
+            # Cập nhật session_state với giá trị nhập mới
+            st.session_state.text_inputs[key] = new_val
+            input_values.append(new_val)
 
-            try:
+            # Lưu vào mapping_dict nếu không trùng lặp
+            mapping_dict[val] = new_val
+
+        # # Kiểm tra nếu có giá trị trùng nhau
+        # duplicate_values = [
+        #     val for val in input_values if input_values.count(val) > 1 and val != ""]
+        # if duplicate_values:
+        #     st.warning(
+        #         f"Không nhập giá trị trùng nhau! - [{', '.join(set(duplicate_values))}]")
+
+        # # Nút button bị mờ nếu có giá trị trùng lặp
+        # btn_disabled = has_duplicate
+
+        if any(val == "" for val in input_values):
+            st.warning(
+                "⚠️ Hãy nhập giá trị thay thế cho tất cả các giá trị duy nhất trước khi chuyển đổi!")
+            # Kiểm tra nếu có giá trị trùng nhau
+        duplicate_values = [
+            val for val in input_values if input_values.count(val) > 1 and val != ""]
+        if duplicate_values:
+            st.warning(
+                f"Không nhập giá trị trùng nhau! - [{', '.join(set(duplicate_values))}]")
+
+        else:
+            if st.button("Chuyển đổi"):
+                column_info = {
+                    "column_name": selected_col,
+                    "mapping_dict": mapping_dict
+                }
+                st.session_state.mapping_dicts.append(column_info)
+
+                data[selected_col] = data[selected_col].map(
+                    lambda x: mapping_dict.get(x, x))
                 data[selected_col] = pd.to_numeric(
                     data[selected_col], errors='coerce')
-            except Exception as e:
-                st.error(f"❌ Lỗi khi chuyển đổi: {e}")
 
-            st.session_state.data = data
-            st.success(f"✅ Chuyển đổi cột `{selected_col}` thành công")
+                st.session_state.text_inputs.clear()
+
+                st.session_state.data = data
+                st.success(f"✅ Chuyển đổi cột `{selected_col}` thành công")
 
     st.dataframe(data)
     return data
@@ -146,9 +224,18 @@ def scaler_numerical_data(data):
         return data
 
     # Cho phép người dùng chọn các cột cần chuẩn hóa
+    target_col = st.selectbox("Chọn cột mục tiêu:",
+                              numerical_cols, key="target_column")
+
+    # Tìm các cột nhị phân (chỉ chứa 0 và 1)
+    # binary_cols = [col for col in numerical_cols if data[col].dropna().isin([0, 1]).all()]
+
+    # Loại bỏ cột nhị phân và cột mục tiêu khỏi danh sách cần chuẩn hóa
+    cols_to_scale = list(set(numerical_cols) - {target_col})
+
+    # Cho phép người dùng chọn các cột cần chuẩn hóa
     cols_to_scale = st.multiselect(
-        "Chọn cột cần chuẩn hóa:", numerical_cols, default=numerical_cols, key="scaler_data"
-    )
+        "Chọn các cột cần chuẩn hóa:", cols_to_scale, key="scale_columns")
 
     if not cols_to_scale:
         st.warning("⚠️ Hãy chọn ít nhất một cột để chuẩn hóa!")
@@ -181,46 +268,3 @@ def preprocess_data(data):
     data = scaler_numerical_data(data)
     data = data.copy()
     return data
-
-
-# def preprocess_data(df):
-#     """Tiền xử lý dữ liệu Titanic."""
-
-#     df = df.copy()
-
-#     # 1. Xử lý missing values
-#     df['Age'].fillna(df['Age'].median(), inplace=True)
-#     df['Fare'].fillna(df['Fare'].median(), inplace=True)
-#     df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
-
-#     # Drop 3 đặc trưng Ticket, Cabin, Name
-#     df.drop(columns=['Ticket', 'Cabin', 'Name'], inplace=True)
-
-#     # 4. Encode cho các biến phân loại
-#     df['Embarked'] = df['Embarked'].map(
-#         {'S': 1, 'C': 2, 'Q': 3}).astype('Int64')
-#     df["Sex"] = df["Sex"].map({'male': 0, 'female': 1}).astype('Int64')
-
-#     # 3. Chuẩn hóa các cột số
-#     scaler = StandardScaler()
-#     numerical_features = ['Age', 'Fare', 'Pclass', 'SibSp', 'Parch', 'Sex', 'Embarked', 'PassengerId', 'Survived']
-#     df[numerical_features] = scaler.fit_transform(df[numerical_features])
-
-
-#     # features = [col for col in df.columns if col != 'Survived']
-#     # target = 'Survived'
-#     # X = df[features]
-#     # y = df[target]
-#     X = df.drop(columns=['Survived'])
-#     y = df['Survived']
-
-#     # Định nghĩa preprocessor
-#     preprocessor = ColumnTransformer(
-#         transformers=[
-#             ('num', StandardScaler(), [
-#                 'Age', 'Fare', 'Pclass', 'SibSp', 'Parch']),
-#             ('cat', OneHotEncoder(), ['Embarked', 'Sex'])
-#         ]
-#     )
-
-#     return X, y, preprocessor, df

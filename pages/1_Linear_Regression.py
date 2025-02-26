@@ -20,6 +20,7 @@ from services.Linear_Regression.utils.org_data import visualize_org_data
 from services.Linear_Regression.utils.training_ln import training
 from services.Linear_Regression.utils.theory_ln import theory_linear
 from services.Linear_Regression.utils.demo_st import demo_app
+from services.Linear_Regression.utils.show_mlflow import show_experiment_selector
 
 # Khởi tạo MLflow
 # mlflow.set_tracking_uri("http://127.0.0.1:5000")
@@ -37,8 +38,8 @@ def main():
         data = pd.read_csv(uploaded_file, delimiter=",")
         st.success("📂 Tải file thành công!")
 
-        data_org, data_preprocess, theory, train_process, demo = st.tabs(
-            ["Dữ liệu gốc", "Dữ liệu được tiền xử lý", "Thông tin", "Huấn luyện", "Demo"])
+        data_org, data_preprocess, theory, train_process, demo, mlflow_p = st.tabs(
+            ["Dữ liệu gốc", "Dữ liệu được tiền xử lý", "Thông tin", "Huấn luyện", "Demo", "Mlflow Tracking"])
 
         # ------------- Show Data Origin ------------------
         with data_org:
@@ -59,6 +60,10 @@ def main():
         # ------------- Demo Application ------------------
         with demo:
             demo_app(data)
+
+        # ------------- Mlflow Tracking ------------------
+        with mlflow_p:
+            show_experiment_selector()
 
 
 if __name__ == "__main__":

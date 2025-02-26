@@ -9,199 +9,91 @@ from services.Linear_Regression.utils.preprocess import preprocess_data
 
 
 def demo_app(data):
-    # Khởi tạo scaler, polynomial transformer, và model nếu chưa có
-    feature_columns = [
-        col for col in data.columns if col != "Survived"]
+    model_type = st.selectbox(
+        "Chọn mô hình:", ["Multiple Regression", "Polynomial Regression"])
 
-    if "scaler" not in st.session_state:
-        st.session_state.scaler = StandardScaler()
-        st.session_state.scaler.fit(data[feature_columns])
+    if model_type == "Multiple Regression" and "linear_model" in st.session_state:
+        model = st.session_state["linear_model"]
+    elif model_type == "Polynomial Regression" and "polynomial_model" in st.session_state:
+        model = st.session_state["polynomial_model"]
+    else:
+        st.warning("Mô hình chưa được huấn luyện.")
+        return
 
-    if "poly" not in st.session_state:
-        st.session_state.poly = PolynomialFeatures(degree=2)
-        st.session_state.poly.fit(data[feature_columns])
+    # Nhập các giá trị cho các cột của X_train
+    X_train = st.session_state.X_train
 
-    if "model_option" not in st.session_state:
-        st.session_state.model_option = "Multiple Regression"  # Giá trị mặc định
+    st.write(X_train.head())
 
-    if "model" not in st.session_state:
-        st.error(
-            "⚠️ Mô hình chưa được huấn luyện! Hãy chạy huấn luyện trước khi dự đoán.")
+    # Đảm bảo bạn dùng session_state
+    num_columns = len(X_train.columns)
+    column_names = X_train.columns.tolist()
 
-    # 5️⃣ Dự đoán trên dữ liệu mới
-    st.markdown("## 🔮 Dự đoán trên dữ liệu mới")
-    st.write("Nhập dữ liệu của hành khách mới để dự đoán khả năng sống sót")
+    st.write(f"Nhập các giá trị cho {num_columns} cột của X_train:")
 
-    with st.form("prediction_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            pclass = st.selectbox("Pclass", [1, 2, 3])
-            age = st.number_input(
-                "Age", min_value=0, max_value=100, value=25)
-            fare = st.number_input("Fare", min_value=0, value=100)
-        with col2:
-            sex = st.selectbox("Sex", ["male", "female"])
-            embarked = st.selectbox("Embarked", ["C", "Q", "S"])
-            sibsp = st.number_input("Sibsp", min_value=0, value=5)
-            parch = st.number_input("Parch", min_value=0, value=5)
+    # Tạo các trường nhập liệu cho từng cột
+    X_train_input = []
+    binary_columns = []
 
-        if st.form_submit_button("📊 Dự đoán"):
-            try:
-                # Chuyển đổi dữ liệu đầu vào thành DataFrame với đúng thứ tự cột
-                input_data = pd.DataFrame([[pclass, age, fare, 1 if sex == "female" else 0,
-                                            1 if embarked == "C" else 2 if embarked == "Q" else 3,
-                                            sibsp, parch]],
-                                          columns=feature_columns)
+    if "mapping_dicts" not in st.session_state:
+        st.session_state.mapping_dicts = []
 
-                # Chuẩn hóa dữ liệu
-                input_scaled = st.session_state.scaler.transform(
-                    input_data)
+    # Chia thành 2 cột
+    cols = st.columns(2)
 
-                if "model" in st.session_state:
-                    if st.session_state.model_option == "Multiple Regression":
-                        prediction = st.session_state.model.predict(
-                            input_scaled)
-                    else:
-                        input_poly = st.session_state.poly.transform(
-                            input_scaled)
+    # Duyệt qua 8 cột đầu tiên (giới hạn hiển thị 4 dòng x 2 cột)
+    # Chỉ lấy 8 cột đầu tiên
+    for i, column_name in enumerate(column_names[:8]):
+        mapping_dict = None
+        for column_info in st.session_state.mapping_dicts:
+            if column_info["column_name"] == column_name:
+                mapping_dict = column_info["mapping_dict"]
+                break
 
-                        # Kiểm tra số đặc trưng có khớp không
-                        expected_features = st.session_state.poly.n_output_features_
-                        if input_poly.shape[1] != expected_features:
-                            st.error(
-                                f"❌ Số lượng đặc trưng đầu vào ({input_poly.shape[1]}) không khớp với số lượng khi huấn luyện ({expected_features}). Hãy kiểm tra lại quá trình xử lý dữ liệu.")
-                        else:
-                            prediction = st.session_state.model.predict(
-                                input_poly)
-                            result = "Sống sót 🟢" if prediction[0] > 0.5 else "Không sống sót 🔴"
-                            st.success(f"🔮 Kết quả dự đoán: {result}")
-                            st.write(
-                                f"🔹 Giá trị dự đoán: {prediction[0]:.4f}")
-                else:
-                    st.error(
-                        "❌ Mô hình chưa được tải! Hãy huấn luyện trước khi dự đoán.")
-            except Exception as e:
-                st.error(f"❌ Lỗi khi dự đoán: {e}")
+        # Hiển thị trong cột trái hoặc phải
+        with cols[i % 2]:  # Cột 1 hoặc cột 2 luân phiên
+            if mapping_dict:  # Nếu có mapping_dict, hiển thị dropdown
+                value = st.selectbox(
+                    f"Giá trị cột {column_name}",
+                    options=list(mapping_dict.keys()),
+                    key=f"column_{i}"
+                )
+                value = int(mapping_dict[value])
+            else:  # Nếu không có mapping_dict, hiển thị ô nhập số
+                value = st.number_input(
+                    f"Giá trị cột {column_name}", key=f"column_{i}")
 
-    # # Khởi tạo scaler, polynomial transformer, và model nếu chưa có
-    # feature_columns = [
-    #     col for col in data.columns if col != "Survived"]
+        X_train_input.append(value)
 
-    # if "scaler" not in st.session_state:
-    #     st.session_state.scaler = StandardScaler()
-    #     st.session_state.scaler.fit(preprocess_data[feature_columns])
+    # Chuyển đổi list thành array
+    X_train_input = np.array(X_train_input).reshape(1, -1)
 
-    # if "poly" not in st.session_state:
-    #     st.session_state.poly = PolynomialFeatures(degree=2)
-    #     st.session_state.poly.fit(preprocess_data[feature_columns])
+    # Sao chép X_train_input để thay đổi giá trị không làm ảnh hưởng đến dữ liệu gốc
+    X_train_input_final = X_train_input.copy()
+    scaler = StandardScaler()
+    # Tạo mảng chỉ số của các phần tử khác 0 và 1
+    for i in range(X_train_input.shape[1]):
 
-    # if "model_option" not in st.session_state:
-    #     st.session_state.model_option = "Multiple Regression"  # Giá trị mặc định
+        # Nếu giá trị không phải 0 hoặc 1
+        if X_train_input[0, i] != 0 and X_train_input[0, i] != 1:
+            # Chuẩn hóa giá trị
 
-    # if "model" not in st.session_state:
-    #     st.error(
-    #         "⚠️ Mô hình chưa được huấn luyện! Hãy chạy huấn luyện trước khi dự đoán.")
+            X_train_input_final[0, i] = scaler.fit_transform(
+                X_train_input[:, i].reshape(-1, 1)).flatten()
 
-    # # 5️⃣ Dự đoán trên dữ liệu mới
-    # st.markdown("## 🔮 Dự đoán trên dữ liệu mới")
-    # st.write("Nhập dữ liệu của hành khách mới để dự đoán khả năng sống sót")
+    st.write("Dữ liệu sau khi xử lý:")
 
-    # with st.form("prediction_form"):
-    #     col1, col2 = st.columns(2)
-    #     with col1:
-    #         pclass = st.selectbox("Pclass", [1, 2, 3])
-    #         age = st.number_input("Age", min_value=0, max_value=100, value=25)
-    #         fare = st.number_input("Fare", min_value=0, value=120)
-    #     with col2:
-    #         sex = st.selectbox("Sex", ["male", "female"])
-    #         embarked = st.selectbox("Embarked", ["C", "Q", "S"])
-    #         sibsp = st.number_input("Sibsp", min_value=0, value=5)
-    #         parch = st.number_input("Parch", min_value=0, value=5)
+    if st.button("Dự đoán"):
+        # Thêm cột 1 cho intercept (nếu cần)
+        X_input_b = np.c_[
+            np.ones((X_train_input_final.shape[0], 1)), X_train_input_final]
 
-    #     if st.form_submit_button("📊 Dự đoán"):
-    #         try:
-    #             # Chuyển đổi dữ liệu đầu vào thành DataFrame với đúng thứ tự cột
-    #             input_data = pd.DataFrame([[pclass, age, fare, 1 if sex == "female" else 0,
-    #                                         1 if embarked == "C" else 2 if embarked == "Q" else 3,
-    #                                         sibsp, parch]],
-    #                                       columns=feature_columns)
+        # Dự đoán với mô hình đã lưu
 
-    #             # Chuẩn hóa dữ liệu
-    #             input_scaled = st.session_state.scaler.transform(input_data)
+        y_pred = X_input_b.dot(model)  # Dự đoán với mô hình đã lưu
 
-    #             if "model" in st.session_state:
-    #                 if st.session_state.model_option == "Multiple Regression":
-    #                     prediction = st.session_state.model.predict(
-    #                         input_scaled)
-    #                 else:
-    #                     input_poly = st.session_state.poly.transform(
-    #                         input_scaled)
-    #                     prediction = st.session_state.model.predict(input_poly)
-
-    #                 # Kiểm tra số đặc trưng có khớp không
-    #                 if input_poly.shape[1] != st.session_state.poly.n_output_features_:
-    #                     st.error(
-    #                         f"❌ Số lượng đặc trưng đầu vào ({input_poly.shape[1]}) không khớp với số lượng khi huấn luyện ({st.session_state.poly.n_output_features_}). Hãy kiểm tra lại quá trình xử lý dữ liệu.")
-    #                 else:
-    #                     result = "Sống sót 🟢" if prediction[0] > 0.5 else "Không sống sót 🔴"
-    #                     st.success(f"🔮 Kết quả dự đoán: {result}")
-    #                     st.write(f"🔹 Giá trị dự đoán: {prediction[0]:.4f}")
-    #             else:
-    #                 st.error(
-    #                     "❌ Mô hình chưa được tải! Hãy huấn luyện trước khi dự đoán.")
-    #         except Exception as e:
-    #             st.error(f"❌ Lỗi khi dự đoán: {e}")
-
-    # model_option = st.selectbox(
-    #     "Chọn mô hình", ["Multiple Regression", "Polynomial Regression"])
-
-    # # Khởi tạo scaler và polynomial transformer nếu chưa có
-    # feature_columns = [
-    #     col for col in data.columns if col != "Survived"]
-
-    # if "scaler" not in st.session_state:
-    #     st.session_state.scaler = StandardScaler()
-    #     st.session_state.scaler.fit(preprocess_data[feature_columns])
-
-    # if "poly" not in st.session_state:
-    #     st.session_state.poly = PolynomialFeatures(degree=2)
-    #     st.session_state.poly.fit(preprocess_data[feature_columns])
-
-    # # 5️⃣ Dự đoán trên dữ liệu mới
-    # st.markdown("## 🔮 Dự đoán trên dữ liệu mới")
-    # st.write("Nhập dữ liệu của hành khách mới để dự đoán khả năng sống sót")
-
-    # with st.form("prediction_form"):
-    #     col1, col2 = st.columns(2)
-    #     with col1:
-    #         pclass = st.selectbox("Pclass", [1, 2, 3])
-    #         age = st.number_input("Age", min_value=0, max_value=100, value=25)
-    #         fare = st.number_input("Fare", min_value=0, value=120)
-    #     with col2:
-    #         sex = st.selectbox("Sex", ["male", "female"])
-    #         embarked = st.selectbox("Embarked", ["C", "Q", "S"])
-    #         sibsp = st.number_input("Sibsp", min_value=0, value=5)
-    #         parch = st.number_input("Parch", min_value=0, value=5)
-
-    #     if st.form_submit_button("📊 Dự đoán"):
-    #         try:
-    #             # Chuyển đổi dữ liệu đầu vào thành DataFrame với đúng thứ tự cột
-    #             input_data = pd.DataFrame([[pclass, age, fare, 1 if sex == "female" else 0,
-    #                                         1 if embarked == "C" else 2 if embarked == "Q" else 3,
-    #                                         sibsp, parch]],
-    #                                       columns=feature_columns)
-
-    #             # Chuẩn hóa dữ liệu
-    #             input_scaled = st.session_state.scaler.transform(input_data)
-
-    #             if st.session_state.model_option == "Multiple Regression":
-    #                 prediction = st.session_state.model.predict(input_scaled)
-    #             else:
-    #                 input_poly = st.session_state.poly.transform(input_scaled)
-    #                 prediction = st.session_state.model.predict(input_poly)
-
-    #             result = "Sống sót 🟢" if prediction[0] > 0.5 else "Không sống sót 🔴"
-    #             st.success(f"🔮 Kết quả dự đoán: {result}")
-    #             st.write(f"🔹 Giá trị dự đoán: {prediction[0]:.4f}")
-    #         except Exception as e:
-    #             st.error(f"❌ Lỗi khi dự đoán: {e}")
+        # Hiển thị kết quả dự đoán
+        if y_pred >= 0.5:
+            st.write("#### Sống sót 🥹")
+        else:
+            st.write("#### Không Sống Sót 💀")

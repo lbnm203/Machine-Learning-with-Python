@@ -13,7 +13,10 @@ import os
 
 # 🌟 Kết nối với DagsHub MLflow
 DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
-st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
+
+if "mlflow_url" not in st.session_state:
+    st.session_state["mlflow_url"] = DAGSHUB_MLFLOW_URI
+
 mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
 
 os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
