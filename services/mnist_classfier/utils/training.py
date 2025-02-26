@@ -103,9 +103,29 @@ def train_process(X, y):
                 - **Giá trị nhỏ**: Tránh overfitting nhưng có thể underfitting.  
                 - **Giá trị lớn**: Dễ bị overfitting vì khó học được các mẫu phức tạp trong dữ liệu 
         """)
+        st.markdown("""- criterion: xác định cách thức cây quyết định chọn thuộc tính để phân nhánh""", help="""
+- Gini:
+    - Mục tiêu của Gini là chọn thuộc tính phân nhánh sao cho dữ liệu sau khi chia có độ thuần khiết cao nhất.
+    - Nếu một node chỉ chứa mẫu của một lớp duy nhất, giá trị Gini sẽ là 0 (thuần khiết hoàn toàn).
+    - Nếu một node chứa mẫu của nhiều lớp khác nhau, giá trị Gini sẽ tăng.
+- Entropy:
+    - Mục tiêu của entropy là chọn thuộc tính phân nhánh sao cho độ không chắc chắn của dữ liệu giảm nhiều nhất.
+    - Entropy càng cao ⟶ Dữ liệu càng hỗn loạn (ít thuần khiết).
+    - Entropy càng thấp ⟶ Dữ liệu càng thuần khiết.
+ """)
+        st.markdown("- min_samples_leaf (Số lượng mẫu tối thiểu trong mỗi lá) ", help="""
+- Mục tiêu là quy định số lượng mẫu nhỏ nhất mà một node lá có thể có.
+- Nếu một node có ít hơn min_samples_leaf mẫu, nó sẽ bị hợp nhất với node cha thay vì trở thành một node lá.
+- Giúp tránh overfitting bằng cách ngăn cây quyết định quá phức tạp.
+""")
 
         max_depth = st.slider("max_depth", 1, 20, 5)
-        model = DecisionTreeClassifier(max_depth=max_depth)
+        criterion = st.selectbox("Chọn tiêu chí phân nhánh (criterion)", [
+            "gini", "entropy"], index=0)
+        min_samples_leaf = st.slider(
+            "Số lượng mẫu tối thiểu trên mỗi lá (min_samples_leaf)", 1, 10, 2)
+        model = DecisionTreeClassifier(
+            max_depth=max_depth, criterion=criterion, min_samples_leaf=min_samples_leaf)
 
     elif model_choice == "SVM":
         st.markdown("""
@@ -164,11 +184,15 @@ def train_process(X, y):
             depths = range(1, 21)
             accuracies = []
             for depth in depths:
-                model = DecisionTreeClassifier(max_depth=max_depth)
+                model = DecisionTreeClassifier(
+                    max_depth=max_depth, criterion=criterion, min_samples_leaf=min_samples_leaf)
                 model.fit(X_train, y_train)
                 y_temp_pred = model.predict(X_test)
                 temp_acc = accuracy_score(y_test, y_temp_pred)
                 accuracies.append(temp_acc)
+
+            mlflow.log_param("criterion", criterion)
+            mlflow.log_param("min_samples_leaf", min_samples_leaf)
 
             # st.write("Độ chính xác qua từng độ sâu ")
             # accuracy_df = pd.DataFrame(

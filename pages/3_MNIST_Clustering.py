@@ -3,14 +3,15 @@ import streamlit as st
 from services.mnist_clustering.utils.data_mnist import mnist_dataset
 from services.mnist_clustering.utils.training import train_process
 from services.mnist_clustering.utils.theory import explain_kmeans, explain_dbscan
+from services.mnist_clustering.utils.show_mlflow import show_experiment_selector
 # Streamlit UI
 
 
 def main():
     st.title(" ✨ MNIST Clustering")
 
-    data_mnist, theory, train, demo = st.tabs(
-        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo"])
+    data_mnist, theory, train, mlflow_p = st.tabs(
+        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Mlflow Tracking"])
 
     # --------------- Data MNIST ---------------
     with data_mnist:
@@ -33,8 +34,8 @@ def main():
         train_process(X, y)
 
     # --------------- DEMO MNIST ---------------
-    with demo:
-        pass
+    with mlflow_p:
+        show_experiment_selector()
 
 
 if __name__ == "__main__":

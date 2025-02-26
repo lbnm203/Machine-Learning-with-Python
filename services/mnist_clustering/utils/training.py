@@ -6,6 +6,17 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
+import os
+import mlflow
+
+def mlflow_input():
+    DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
+    mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+    st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
+    os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
+
+    mlflow.set_experiment("MNIST_Clustering")
 
 # Hàm giảm chiều dữ liệu bằng PCA
 
@@ -90,170 +101,193 @@ def train_process(X, y):
     X_train = X_train.reshape(-1, 28 * 28) / 255.0
     X_test = X_test.reshape(-1, 28 * 28) / 255.0
 
-    # Chọn có dùng PCA không
-    use_pca = st.checkbox("Sử dụng PCA để giảm chiều dữ liệu", value=True)
-    if use_pca:
-        n_components = st.slider("Số chiều sau PCA",
-                                 2, 100, 50,
-                                 help="""PCA (Principal Component Analysis) là một kỹ thuật giảm chiều dữ liệu trong học máy và thống kê, 
-                                 giúp biến đổi dữ liệu từ không gian nhiều chiều sang không gian ít chiều hơn mà vẫn giữ lại được phần lớn 
-                                 thông tin quan trọng. PCA có thể loại bỏ nhiễu và các biến dư thừa, giúp cải thiện hiệu suất của các mô hình học máy.""")
-        X_train_reduced = reduce_dimension(X_train, n_components)
-    else:
-        X_train_reduced = X_train
+    mlflow_input()
 
-    st.write("---")
+    # Bắt đầu Tracking với MLflow
+    with mlflow.start_run(run_name="Clustering_Training"):
 
-    col1, col2 = st.columns(2)
-    with col1:
-        # Chọn thuật toán phân cụm
-        model_type = st.selectbox(
-            'Chọn Thuật Toán Phân Cụm', ('KMeans', 'DBSCAN'))
-        st.write('---')
+        mlflow.log_param("num_samples", num_samples)
+        mlflow.log_param("test_size", test_size)
+        mlflow.log_param("X_train_shape", X_train.shape)
+        mlflow.log_param("X_test_shape", X_test.shape)
 
-        if model_type == "KMeans":
-            n_clusters = st.slider("Số cụm (K)", 2, 20, 10, help="Số lượng tâm cần tạo ra")
-            init = st.selectbox("Init", ('k-means++', 'random'), help="""
-- `k-means++`: chọn trọng tâm cụm ban đầu bằng cách lấy mẫu dựa trên phân phối xác suất thực nghiệm của sự đóng góp 
-của các điểm vào quán tính tổng thể. Kỹ thuật này tăng tốc độ hội tụ.
-- `random`: chọn `n_clusters` ngẫu nhiên các quan sát (hàng) từ dữ liệu cho trọng tâm ban đầu.                                
-""")
-            max_iter = st.slider("Max iterations", 100, 1000, 300, help="Số lần lặp tối đa của thuật toán k-means cho một lần chạy duy nhất")
-            if st.button("Huấn luyện KMeans"):
-                kmeans_labels = train_kmeans(X_train_reduced, n_clusters, init, max_iter)
-                st.session_state["kmeans_labels"] = kmeans_labels
-                st.success("Huấn luyện KMeans thành công!")
+        # Chọn có dùng PCA không
+        use_pca = st.checkbox("Sử dụng PCA để giảm chiều dữ liệu", value=True)
+        if use_pca:
+            n_components = st.slider("Số chiều sau PCA",
+                                    2, 100, 50,
+                                    help="""PCA (Principal Component Analysis) là một kỹ thuật giảm chiều dữ liệu trong học máy và thống kê, 
+                                    giúp biến đổi dữ liệu từ không gian nhiều chiều sang không gian ít chiều hơn mà vẫn giữ lại được phần lớn 
+                                    thông tin quan trọng. PCA có thể loại bỏ nhiễu và các biến dư thừa, giúp cải thiện hiệu suất của các mô hình học máy.""")
+            X_train_reduced = reduce_dimension(X_train, n_components)
+            mlflow.log_param("PCA_components", n_components)
+        else:
+            X_train_reduced = X_train
 
-                st.markdown("Silhouette Score", help="""
-- Silhouette Score là một chỉ số đánh giá chất lượng của các cụm (clusters) trong phân cụm dữ liệu. 
-Nó đo lường mức độ tương đồng của một điểm dữ liệu với các điểm trong cùng cụm so với các điểm trong 
-các cụm khác. Giá trị Silhouette Score nằm trong khoảng từ -1 đến 1, trong đó:
-    - Giá trị càng gần 1: Các cụm càng tốt, điểm dữ liệu được gán đúng cụm.
-    - Giá trị gần 0: Điểm dữ liệu nằm gần ranh giới giữa hai cụm.
-    - Giá trị âm: Điểm dữ liệu có thể bị gán sai cụm.                           
-""")
-                # Đánh giá KMeans
-                if len(np.unique(kmeans_labels)) > 1:
-                    silhouette_kmeans = silhouette_score(
-                        X_train_reduced, kmeans_labels)
+        st.write("---")
 
-                    st.success(f"Silhouette Score: {silhouette_kmeans:.4f}")
-                else:
-                    st.warning(
-                        "Không thể tính Silhouette Score (chỉ có 1 cụm)")
+        col1, col2 = st.columns(2)
+        with col1:
+            # Chọn thuật toán phân cụm
+            model_type = st.selectbox(
+                'Chọn Thuật Toán Phân Cụm', ('KMeans', 'DBSCAN'))
+            st.write('---')
 
-                with col2:
-                    # Giảm chiều xuống 2D để vẽ
-                    if use_pca and n_components != 2:
-                        X_train_2d = reduce_dimension(X_train, 2)
-                    else:
-                        X_train_2d = X_train_reduced
+            if model_type == "KMeans":
+                n_clusters = st.slider("Số cụm (K)", 2, 20, 10, help="Số lượng tâm cần tạo ra")
+                init = st.selectbox("Init", ('k-means++', 'random'), help="""
+    - `k-means++`: chọn trọng tâm cụm ban đầu bằng cách lấy mẫu dựa trên phân phối xác suất thực nghiệm của sự đóng góp 
+    của các điểm vào quán tính tổng thể. Kỹ thuật này tăng tốc độ hội tụ.
+    - `random`: chọn `n_clusters` ngẫu nhiên các quan sát (hàng) từ dữ liệu cho trọng tâm ban đầu.                                
+    """)
+                max_iter = st.slider("Max iterations", 100, 1000, 300, help="Số lần lặp tối đa của thuật toán k-means cho một lần chạy duy nhất")
+                if st.button("Huấn luyện KMeans"):
+                    kmeans_labels = train_kmeans(X_train_reduced, n_clusters, init, max_iter)
+                    st.session_state["kmeans_labels"] = kmeans_labels
+                    st.success("Huấn luyện KMeans thành công!")
+                    # Logging MLflow
+                    mlflow.log_param("Clustering_Algorithm", "KMeans")
+                    mlflow.log_param("n_clusters", n_clusters)
+                    mlflow.log_param("init", init)
+                    mlflow.log_param("max_iter", max_iter)
 
-                    # Vẽ biểu đồ
-                    st.header("Kết quả phân cụm KMeans")
-                    fig, ax = plt.subplots(figsize=(6, 6))
-                    ax.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
-                               c=kmeans_labels, cmap='viridis', s=5)
-                    ax.set_title("Phân cụm KMeans")
-                    ax.set_xticks([])
-                    ax.set_yticks([])
-                    st.pyplot(fig)
-
-        elif model_type == "DBSCAN":
-            st.markdown("""
-            - **Epsilon (ε)**: giúp xác định các điểm nằm trong vùng lân cận epsilon.""", 
-            help="""
-- **Epsilon (ε)** thấp có thể dẫn đến:
-    - vùng lân cận của mỗi điểm rất nhỏ, dẫn đến ít điểm được coi là lân cận của nhau
-    - Nhiều điểm có thể bị coi là nhiễu (noise) vì không đủ điểm trong vùng lân cận
-    - Các cụm có thể bị chia nhỏ thành nhiều cụm nhỏ hoặc thậm chí không hình thành cụm nào.
-        
-    → Số lượng cụm tăng lên, nhiều điểm bị gán nhãn là nhiễu.
-- **Epsilon (ε)** cao có thể dẫn đến:
-    - Vùng lân cận của mỗi điểm rất lớn, dẫn đến nhiều điểm được coi là lân cận của nhau
-    - Các cụm có thể bị hợp nhất thành một cụm lớn, ngay cả khi chúng không thực sự thuộc cùng một cụm.
-        
-    → Số lượng cụm giảm xuống, có thể chỉ còn một cụm duy nhất, ít điểm bị gán nhãn là nhiễu.""")
-            
-            st.markdown("""
-            - **Min_samples**: Số lượng điểm tối thiểu trong vùng lân cận ε để một điểm được coi là điểm lõi (core point).""",
-            help="""
-- **Min_samples** thấp có thể dẫn đến:
-    - Rất dễ để một điểm trở thành điểm lõi, ngay cả khi nó nằm trong vùng có mật độ thấp.
-    - Các cụm có thể chứa nhiều điểm nhiễu hoặc không đồng nhất.
-    → Số lượng cụm tăng lên, các cụm có thể không chính xác và chứa nhiều nhiễu. 
-- **Min_samples** cao có thể dẫn đến:
-    - Khó để một điểm trở thành điểm lõi, vì cần nhiều điểm trong vùng lân cận.
-    - Các cụm có thể bị bỏ sót, đặc biệt là các cụm nhỏ hoặc có mật độ thấp.
-    → Số lượng cụm giảm xuống, nhiều điểm bị gán nhãn là nhiễu, ngay cả khi chúng thuộc về một cụm thực sự.
-""")
-            st.markdown("""
-            - **metric**: Hàm khoảng cách để đo lường khoảng cách giữa hai điểm bất kì""",
-            help="""mặc định là euclidean""")
-
-            st.markdown("""
-            - **algorithm**: phương pháp được sử dụng để xác định các điểm láng giềng""",
-            help="""Bao gồm các phương pháp auto, ball_tree, kd_tree, brute: 
-- `auto`: DBSCAN tự động chọn thuật toán tối ưu dựa trên đặc điểm của dữ liệu (ví dụ: số chiều, số lượng điểm dữ liệu).
-Nó sẽ ưu tiên sử dụng kd_tree hoặc ball_tree nếu dữ liệu phù hợp, ngược lại sẽ sử dụng brute.
-- `ball_tree`: Sử dụng cấu trúc dữ liệu Ball Tree để tổ chức các điểm dữ liệu trong không gian.
-Ball Tree chia không gian thành các hình cầu (balls) lồng nhau, giúp tìm kiếm lân cận hiệu quả hơn trong không gian nhiều chiều. 
-Sử dụng khi dữ liệu có số chiều cao (high-dimensional data) và kd_tree không hiệu quả.
-- `kd_tree`: Sử dụng cấu trúc dữ liệu KD-Tree (K-dimensional Tree) để tổ chức các điểm dữ liệu.
-KD-Tree chia không gian thành các vùng hình chữ nhật dựa trên các trục tọa độ. Sử dụng khi dữ liệu có số chiều thấp đến trung bình 
-(thường dưới 20 chiều).
-- `brute`: Sử dụng phương pháp vét cạn (brute-force) để tính toán khoảng cách giữa tất cả các cặp điểm.
-Không sử dụng bất kỳ cấu trúc dữ liệu nào để tối ưu hóa tìm kiếm. Sử dụng khi dữ liệu có số chiều rất cao hoặc khi các thuật toán khác không hiệu quả.
-""")
-
-            eps = st.slider("Epsilon", 0.1, 5.0, 1.0)
-            min_samples = st.slider("Min Samples", 2, 20, 5)
-            metric = st.selectbox("Metric", ["euclidean", "manhattan"])
-            algorithm = st.selectbox("Algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
-            if st.button("Huấn luyện DBSCAN"):
-                dbscan_labels = train_dbscan(X_train_reduced, eps, min_samples, metric, algorithm)
-                st.session_state["dbscan_labels"] = dbscan_labels
-                st.success("Huấn luyện DBSCAN thành công!")
-
-                st.markdown("Silhouette Score", help="""
-- Silhouette Score là một chỉ số đánh giá chất lượng của các cụm (clusters) trong phân cụm dữ liệu. 
-Nó đo lường mức độ tương đồng của một điểm dữ liệu với các điểm trong cùng cụm so với các điểm trong 
-các cụm khác. Giá trị Silhouette Score nằm trong khoảng từ -1 đến 1, trong đó:
-    - Giá trị càng gần 1: Các cụm càng tốt, điểm dữ liệu được gán đúng cụm.
-    - Giá trị gần 0: Điểm dữ liệu nằm gần ranh giới giữa hai cụm.
-    - Giá trị âm: Điểm dữ liệu có thể bị gán sai cụm.                           
-""")
-                # Đánh giá DBSCAN
-                if len(np.unique(dbscan_labels)) > 1:
-                    mask = dbscan_labels != -1
-                    X_no_noise = X_train_reduced[mask]
-                    labels_no_noise = dbscan_labels[mask]
-                    if len(np.unique(labels_no_noise)) > 1:
-                        silhouette_dbscan = silhouette_score(
-                            X_no_noise, labels_no_noise)
-                        
-                        st.success(
-                            f"Silhouette Score (không tính nhiễu): {silhouette_dbscan:.4f}")
+                    st.markdown("Silhouette Score", help="""
+    - Silhouette Score là một chỉ số đánh giá chất lượng của các cụm (clusters) trong phân cụm dữ liệu. 
+    Nó đo lường mức độ tương đồng của một điểm dữ liệu với các điểm trong cùng cụm so với các điểm trong 
+    các cụm khác. Giá trị Silhouette Score nằm trong khoảng từ -1 đến 1, trong đó:
+        - Giá trị càng gần 1: Các cụm càng tốt, điểm dữ liệu được gán đúng cụm.
+        - Giá trị gần 0: Điểm dữ liệu nằm gần ranh giới giữa hai cụm.
+        - Giá trị âm: Điểm dữ liệu có thể bị gán sai cụm.                           
+    """)
+                    # Đánh giá KMeans
+                    if len(np.unique(kmeans_labels)) > 1:
+                        silhouette_kmeans = silhouette_score(
+                            X_train_reduced, kmeans_labels)
+                        mlflow.log_metric("Silhouette_Score_KMeans", silhouette_kmeans)
+                        st.success(f"Silhouette Score: {silhouette_kmeans:.4f}")
                     else:
                         st.warning(
-                            "Không thể tính Silhouette Score (chỉ có 1 cụm sau khi loại nhiễu)")
-                else:
-                    st.warning(
-                        "Không thể tính Silhouette Score (chỉ có 1 cụm hoặc toàn nhiễu)")
+                            "Không thể tính Silhouette Score (chỉ có 1 cụm)")
 
-                with col2:
-                    # Giảm chiều xuống 2D để vẽ
-                    if use_pca and n_components != 2:
-                        X_train_2d = reduce_dimension(X_train, 2)
+                    with col2:
+                        # Giảm chiều xuống 2D để vẽ
+                        if use_pca and n_components != 2:
+                            X_train_2d = reduce_dimension(X_train, 2)
+                        else:
+                            X_train_2d = X_train_reduced
+
+                        # Vẽ biểu đồ
+                        st.header("Kết quả phân cụm KMeans")
+                        fig, ax = plt.subplots(figsize=(6, 6))
+                        ax.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
+                                c=kmeans_labels, cmap='viridis', s=5)
+                        ax.set_title("Phân cụm KMeans")
+                        ax.set_xticks([])
+                        ax.set_yticks([])
+                        st.pyplot(fig)
+
+            elif model_type == "DBSCAN":
+                st.markdown("""
+                - **Epsilon (ε)**: giúp xác định các điểm nằm trong vùng lân cận epsilon.""", 
+                help="""
+    - **Epsilon (ε)** thấp có thể dẫn đến:
+        - vùng lân cận của mỗi điểm rất nhỏ, dẫn đến ít điểm được coi là lân cận của nhau
+        - Nhiều điểm có thể bị coi là nhiễu (noise) vì không đủ điểm trong vùng lân cận
+        - Các cụm có thể bị chia nhỏ thành nhiều cụm nhỏ hoặc thậm chí không hình thành cụm nào.
+            
+        → Số lượng cụm tăng lên, nhiều điểm bị gán nhãn là nhiễu.
+    - **Epsilon (ε)** cao có thể dẫn đến:
+        - Vùng lân cận của mỗi điểm rất lớn, dẫn đến nhiều điểm được coi là lân cận của nhau
+        - Các cụm có thể bị hợp nhất thành một cụm lớn, ngay cả khi chúng không thực sự thuộc cùng một cụm.
+            
+        → Số lượng cụm giảm xuống, có thể chỉ còn một cụm duy nhất, ít điểm bị gán nhãn là nhiễu.""")
+                
+                st.markdown("""
+                - **Min_samples**: Số lượng điểm tối thiểu trong vùng lân cận ε để một điểm được coi là điểm lõi (core point).""",
+                help="""
+    - **Min_samples** thấp có thể dẫn đến:
+        - Rất dễ để một điểm trở thành điểm lõi, ngay cả khi nó nằm trong vùng có mật độ thấp.
+        - Các cụm có thể chứa nhiều điểm nhiễu hoặc không đồng nhất.
+        → Số lượng cụm tăng lên, các cụm có thể không chính xác và chứa nhiều nhiễu. 
+    - **Min_samples** cao có thể dẫn đến:
+        - Khó để một điểm trở thành điểm lõi, vì cần nhiều điểm trong vùng lân cận.
+        - Các cụm có thể bị bỏ sót, đặc biệt là các cụm nhỏ hoặc có mật độ thấp.
+        → Số lượng cụm giảm xuống, nhiều điểm bị gán nhãn là nhiễu, ngay cả khi chúng thuộc về một cụm thực sự.
+    """)
+                st.markdown("""
+                - **metric**: Hàm khoảng cách để đo lường khoảng cách giữa hai điểm bất kì""",
+                help="""mặc định là euclidean""")
+
+                st.markdown("""
+                - **algorithm**: phương pháp được sử dụng để xác định các điểm láng giềng""",
+                help="""Bao gồm các phương pháp auto, ball_tree, kd_tree, brute: 
+    - `auto`: DBSCAN tự động chọn thuật toán tối ưu dựa trên đặc điểm của dữ liệu (ví dụ: số chiều, số lượng điểm dữ liệu).
+    Nó sẽ ưu tiên sử dụng kd_tree hoặc ball_tree nếu dữ liệu phù hợp, ngược lại sẽ sử dụng brute.
+    - `ball_tree`: Sử dụng cấu trúc dữ liệu Ball Tree để tổ chức các điểm dữ liệu trong không gian.
+    Ball Tree chia không gian thành các hình cầu (balls) lồng nhau, giúp tìm kiếm lân cận hiệu quả hơn trong không gian nhiều chiều. 
+    Sử dụng khi dữ liệu có số chiều cao (high-dimensional data) và kd_tree không hiệu quả.
+    - `kd_tree`: Sử dụng cấu trúc dữ liệu KD-Tree (K-dimensional Tree) để tổ chức các điểm dữ liệu.
+    KD-Tree chia không gian thành các vùng hình chữ nhật dựa trên các trục tọa độ. Sử dụng khi dữ liệu có số chiều thấp đến trung bình 
+    (thường dưới 20 chiều).
+    - `brute`: Sử dụng phương pháp vét cạn (brute-force) để tính toán khoảng cách giữa tất cả các cặp điểm.
+    Không sử dụng bất kỳ cấu trúc dữ liệu nào để tối ưu hóa tìm kiếm. Sử dụng khi dữ liệu có số chiều rất cao hoặc khi các thuật toán khác không hiệu quả.
+    """)
+
+                eps = st.slider("Epsilon", 0.1, 5.0, 1.0)
+                min_samples = st.slider("Min Samples", 2, 20, 5)
+                metric = st.selectbox("Metric", ["euclidean", "manhattan"])
+                algorithm = st.selectbox("Algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
+                if st.button("Huấn luyện DBSCAN"):
+                    dbscan_labels = train_dbscan(X_train_reduced, eps, min_samples, metric, algorithm)
+                    st.session_state["dbscan_labels"] = dbscan_labels
+                    st.success("Huấn luyện DBSCAN thành công!")
+
+                    # Logging MLflow
+                    mlflow.log_param("Clustering_Algorithm", "DBSCAN")
+                    mlflow.log_param("eps", eps)
+                    mlflow.log_param("min_samples", min_samples)
+                    mlflow.log_param("metric", metric)
+                    mlflow.log_param("algorithm", algorithm)
+
+                    st.markdown("Silhouette Score", help="""
+    - Silhouette Score là một chỉ số đánh giá chất lượng của các cụm (clusters) trong phân cụm dữ liệu. 
+    Nó đo lường mức độ tương đồng của một điểm dữ liệu với các điểm trong cùng cụm so với các điểm trong 
+    các cụm khác. Giá trị Silhouette Score nằm trong khoảng từ -1 đến 1, trong đó:
+        - Giá trị càng gần 1: Các cụm càng tốt, điểm dữ liệu được gán đúng cụm.
+        - Giá trị gần 0: Điểm dữ liệu nằm gần ranh giới giữa hai cụm.
+        - Giá trị âm: Điểm dữ liệu có thể bị gán sai cụm.                           
+    """)
+                    # Đánh giá DBSCAN
+                    if len(np.unique(dbscan_labels)) > 1:
+                        mask = dbscan_labels != -1
+                        X_no_noise = X_train_reduced[mask]
+                        labels_no_noise = dbscan_labels[mask]
+                        if len(np.unique(labels_no_noise)) > 1:
+                            silhouette_dbscan = silhouette_score(
+                                X_no_noise, labels_no_noise)
+                            mlflow.log_metric("Silhouette_Score_DBSCAN", silhouette_dbscan)
+                            st.success(
+                                f"Silhouette Score (không tính nhiễu): {silhouette_dbscan:.4f}")
+                        else:
+                            st.warning(
+                                "Không thể tính Silhouette Score (chỉ có 1 cụm sau khi loại nhiễu)")
                     else:
-                        X_train_2d = X_train_reduced
+                        st.warning(
+                            "Không thể tính Silhouette Score (chỉ có 1 cụm hoặc toàn nhiễu)")
 
-                    # Vẽ biểu đồ
-                    st.write("#### Kết quả phân cụm DBSCAN")
-                    fig, ax = plt.subplots(figsize=(6, 6))
-                    ax.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
-                               c=dbscan_labels, cmap='viridis', s=5)
-                    ax.set_title("Phân cụm DBSCAN")
-                    ax.set_xticks([])
-                    ax.set_yticks([])
-                    st.pyplot(fig)
+                    with col2:
+                        # Giảm chiều xuống 2D để vẽ
+                        if use_pca and n_components != 2:
+                            X_train_2d = reduce_dimension(X_train, 2)
+                        else:
+                            X_train_2d = X_train_reduced
+
+                        # Vẽ biểu đồ
+                        st.write("#### Kết quả phân cụm DBSCAN")
+                        fig, ax = plt.subplots(figsize=(6, 6))
+                        ax.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
+                                c=dbscan_labels, cmap='viridis', s=5)
+                        ax.set_title("Phân cụm DBSCAN")
+                        ax.set_xticks([])
+                        ax.set_yticks([])
+                        st.pyplot(fig)
