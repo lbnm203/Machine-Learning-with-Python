@@ -28,9 +28,9 @@ def train_kmeans(X, n_clusters, init, max_iter):
 # Hàm train DBSCAN
 
 
-def train_dbscan(X, eps, min_samples, metrics, algorithm):
+def train_dbscan(X, eps, min_samples, metric, algorithm):
     """Huấn luyện mô hình DBSCAN với tham số eps và min_samples."""
-    dbscan = DBSCAN(eps=eps, min_samples=min_samples, metrics=metrics, algorithm=algorithm)
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric=metric, algorithm=algorithm)
     labels = dbscan.fit_predict(X)
     return labels
 
@@ -208,10 +208,10 @@ Không sử dụng bất kỳ cấu trúc dữ liệu nào để tối ưu hóa 
 
             eps = st.slider("Epsilon", 0.1, 5.0, 1.0)
             min_samples = st.slider("Min Samples", 2, 20, 5)
-            metrics = st.selectbox("Metric", ["euclidean", "manhattan"])
+            metric = st.selectbox("Metric", ["euclidean", "manhattan"])
             algorithm = st.selectbox("Algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
             if st.button("Huấn luyện DBSCAN"):
-                dbscan_labels = train_dbscan(X_train_reduced, eps, min_samples, metrics, algorithm)
+                dbscan_labels = train_dbscan(X_train_reduced, eps, min_samples, metric, algorithm)
                 st.session_state["dbscan_labels"] = dbscan_labels
                 st.success("Huấn luyện DBSCAN thành công!")
 

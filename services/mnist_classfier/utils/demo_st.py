@@ -4,6 +4,7 @@ import numpy as np
 import mlflow
 import mlflow.sklearn
 import joblib
+import cv2
 
 from PIL import Image
 from streamlit_drawable_canvas import st_canvas
@@ -11,12 +12,15 @@ from streamlit_drawable_canvas import st_canvas
 
 def preprocess_canvas_image(canvas_result):
     if canvas_result.image_data is not None:
-        img = Image.fromarray(
-            canvas_result.image_data[:, :, 0].astype(np.uint8))
-        # Resize và chuyển thành grayscale
-        img = img.resize((28, 28)).convert("L")
-        img = np.array(img, dtype=np.float32) / 255.0  # Chuẩn hóa về [0, 1]
-        return img.reshape(1, -1)  # Chuyển thành vector 1D
+        try:
+            img = Image.fromarray(
+                canvas_result.image_data[:, :, 0].astype(np.uint8))
+            img = img.resize((28, 28)).convert("L")
+            img = np.array(img, dtype=np.float32) / 255.0
+            return img.reshape(1, -1)
+        except Exception as e:
+            st.error(f"Lỗi xử lý ảnh: {e}")
+            return None
     return None
 
 
@@ -62,16 +66,20 @@ def demo_app():
     with st.container(border=True):
         col1, col2 = st.columns(2)
         with col1:
+            SIZE = 192
             canvas_result = st_canvas(
                 fill_color="black",
                 stroke_width=10,
                 stroke_color="white",
+                update_streamlit=True,
                 background_color="black",
-                height=150,
-                width=150,
+                height=SIZE,
+                width=SIZE,
                 drawing_mode="freedraw",
-                key="digit_canvas"
+                key="canvas"
             )
+            st.write("Canvas data shape:",
+                     canvas_result.image_data.shape if canvas_result.image_data is not None else "Không có dữ liệu")
 
         if st.button("Dự đoán số"):
             with col2:
