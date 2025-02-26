@@ -1,9 +1,4 @@
 import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
-import mlflow
-import mlflow.sklearn
 
 from services.mnist_clustering.utils.data_mnist import mnist_dataset
 from services.mnist_clustering.utils.training import train_process
@@ -23,7 +18,6 @@ def main():
 
     # -------- Theory Decision Tree - SVM ---------
     with theory:
-
         option = st.selectbox(
             'Chọn phương pháp giải thích:',
             ('KMeans', 'DBSCAN')
