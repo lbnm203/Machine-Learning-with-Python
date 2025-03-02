@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.datasets import fetch_openml
 import streamlit as st
 import matplotlib.pyplot as plt
+import pickle
 
 
 def visualize_mnist(X, y):
@@ -31,12 +32,11 @@ def mnist_dataset():
     st.markdown("## 📜 Tập dữ liệu MNIST")
     st.write("---")
 
-    mnist = fetch_openml('mnist_784', version=1, as_frame=False)
-    X, y = mnist["data"], mnist["target"]
+    with open('./services/mnist_pca_tsne/data/X.pkl', 'rb') as f:
+        X = pickle.load(f)
 
-    # chuyển đổi kiểu dữ liệu
-    X = X.astype(np.float32)
-    y = y.astype(np.int64)
+    with open('./services/mnist_pca_tsne/data/y.pkl', 'rb') as f:
+        y = pickle.load(f)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -75,19 +75,3 @@ def mnist_dataset():
     st.write("---")
 
     return X, y
-
-
-def decision_tree_theory():
-    pass
-
-
-def svm_theory():
-    pass
-
-
-def theory_info():
-    st.title("Thông tin về các thuật toán")
-    st.markdown("""
-    - Decision Tree: Thuật toán dự đoán giá trị đầu ra dựa trên các cây quyết đ��nh.
-    - Support Vector Machine (SVM): Thuật toán học máy tính đặc trưng (SVM) cho phân l��p hai hoặc nhiều l��p.
-    """)

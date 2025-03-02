@@ -21,11 +21,11 @@ def mlflow_input():
 # Hàm giảm chiều dữ liệu bằng PCA
 
 
-def reduce_dimension(X, n_components):
-    """Giảm chiều dữ liệu xuống n_components chiều bằng PCA."""
-    pca = PCA(n_components=n_components)
-    X_reduced = pca.fit_transform(X)
-    return X_reduced
+# def reduce_dimension(X, n_components):
+#     """Giảm chiều dữ liệu xuống n_components chiều bằng PCA."""
+#     pca = PCA(n_components=n_components)
+#     X_reduced = pca.fit_transform(X)
+#     return X_reduced
 
 # Hàm huấn luyện Kmeans
 
@@ -111,18 +111,18 @@ def train_process(X, y):
         mlflow.log_param("X_train_shape", X_train.shape)
         mlflow.log_param("X_test_shape", X_test.shape)
 
-        # Chọn có dùng PCA không
-        use_pca = st.checkbox("Sử dụng PCA để giảm chiều dữ liệu", value=True)
-        if use_pca:
-            n_components = st.slider("Số chiều sau PCA",
-                                    2, 100, 50,
-                                    help="""PCA (Principal Component Analysis) là một kỹ thuật giảm chiều dữ liệu trong học máy và thống kê, 
-                                    giúp biến đổi dữ liệu từ không gian nhiều chiều sang không gian ít chiều hơn mà vẫn giữ lại được phần lớn 
-                                    thông tin quan trọng. PCA có thể loại bỏ nhiễu và các biến dư thừa, giúp cải thiện hiệu suất của các mô hình học máy.""")
-            X_train_reduced = reduce_dimension(X_train, n_components)
-            mlflow.log_param("PCA_components", n_components)
-        else:
-            X_train_reduced = X_train
+        # # Chọn có dùng PCA không
+        # use_pca = st.checkbox("Sử dụng PCA để giảm chiều dữ liệu", value=True)
+        # if use_pca:
+        #     n_components = st.slider("Số chiều sau PCA",
+        #                             2, 100, 50,
+        #                             help="""PCA (Principal Component Analysis) là một kỹ thuật giảm chiều dữ liệu trong học máy và thống kê, 
+        #                             giúp biến đổi dữ liệu từ không gian nhiều chiều sang không gian ít chiều hơn mà vẫn giữ lại được phần lớn 
+        #                             thông tin quan trọng. PCA có thể loại bỏ nhiễu và các biến dư thừa, giúp cải thiện hiệu suất của các mô hình học máy.""")
+        #     X_train_reduced = reduce_dimension(X_train, n_components)
+        #     mlflow.log_param("PCA_components", n_components)
+        # else:
+        #     X_train_reduced = X_train
 
         st.write("---")
 
@@ -142,7 +142,7 @@ def train_process(X, y):
     """)
                 max_iter = st.slider("Max iterations", 100, 1000, 300, help="Số lần lặp tối đa của thuật toán k-means cho một lần chạy duy nhất")
                 if st.button("Huấn luyện KMeans"):
-                    kmeans_labels = train_kmeans(X_train_reduced, n_clusters, init, max_iter)
+                    kmeans_labels = train_kmeans(X_train, n_clusters, init, max_iter)
                     st.session_state["kmeans_labels"] = kmeans_labels
                     st.success("Huấn luyện KMeans thành công!")
                     # Logging MLflow
@@ -162,7 +162,7 @@ def train_process(X, y):
                     # Đánh giá KMeans
                     if len(np.unique(kmeans_labels)) > 1:
                         silhouette_kmeans = silhouette_score(
-                            X_train_reduced, kmeans_labels)
+                            X_train, kmeans_labels)
                         mlflow.log_metric("Silhouette_Score_KMeans", silhouette_kmeans)
                         st.success(f"Silhouette Score: {silhouette_kmeans:.4f}")
                     else:
@@ -170,16 +170,16 @@ def train_process(X, y):
                             "Không thể tính Silhouette Score (chỉ có 1 cụm)")
 
                     with col2:
-                        # Giảm chiều xuống 2D để vẽ
-                        if use_pca and n_components != 2:
-                            X_train_2d = reduce_dimension(X_train, 2)
-                        else:
-                            X_train_2d = X_train_reduced
+                        # # Giảm chiều xuống 2D để vẽ
+                        # if use_pca and n_components != 2:
+                        #     X_train_2d = reduce_dimension(X_train, 2)
+                        # else:
+                        #     X_train_2d = X_train_reduced
 
                         # Vẽ biểu đồ
                         st.header("Kết quả phân cụm KMeans")
-                        fig, ax = plt.subplots(figsize=(6, 6))
-                        ax.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
+                        fig, ax = plt.subplots(figsize=(12, 12))
+                        ax.scatter(X_train[:, 0], X_train[:, 1],
                                 c=kmeans_labels, cmap='viridis', s=5)
                         ax.set_title("Phân cụm KMeans")
                         ax.set_xticks([])
@@ -238,7 +238,7 @@ def train_process(X, y):
                 metric = st.selectbox("Metric", ["euclidean", "manhattan"])
                 algorithm = st.selectbox("Algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
                 if st.button("Huấn luyện DBSCAN"):
-                    dbscan_labels = train_dbscan(X_train_reduced, eps, min_samples, metric, algorithm)
+                    dbscan_labels = train_dbscan(X_train, eps, min_samples, metric, algorithm)
                     st.session_state["dbscan_labels"] = dbscan_labels
                     st.success("Huấn luyện DBSCAN thành công!")
 
@@ -260,7 +260,7 @@ def train_process(X, y):
                     # Đánh giá DBSCAN
                     if len(np.unique(dbscan_labels)) > 1:
                         mask = dbscan_labels != -1
-                        X_no_noise = X_train_reduced[mask]
+                        X_no_noise = X_train[mask]
                         labels_no_noise = dbscan_labels[mask]
                         if len(np.unique(labels_no_noise)) > 1:
                             silhouette_dbscan = silhouette_score(
@@ -276,16 +276,16 @@ def train_process(X, y):
                             "Không thể tính Silhouette Score (chỉ có 1 cụm hoặc toàn nhiễu)")
 
                     with col2:
-                        # Giảm chiều xuống 2D để vẽ
-                        if use_pca and n_components != 2:
-                            X_train_2d = reduce_dimension(X_train, 2)
-                        else:
-                            X_train_2d = X_train_reduced
+                        # # Giảm chiều xuống 2D để vẽ
+                        # if use_pca and n_components != 2:
+                        #     X_train_2d = reduce_dimension(X_train, 2)
+                        # else:
+                        #     X_train_2d = X_train_reduced
 
                         # Vẽ biểu đồ
                         st.write("#### Kết quả phân cụm DBSCAN")
                         fig, ax = plt.subplots(figsize=(6, 6))
-                        ax.scatter(X_train_2d[:, 0], X_train_2d[:, 1],
+                        ax.scatter(X_train[:, 0], X_train[:, 1],
                                 c=dbscan_labels, cmap='viridis', s=5)
                         ax.set_title("Phân cụm DBSCAN")
                         ax.set_xticks([])
