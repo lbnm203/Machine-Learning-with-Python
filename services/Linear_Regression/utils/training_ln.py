@@ -120,7 +120,7 @@ def train_polynomial_regression(X_train, y_train, degree=2, learning_rate=0.001,
     return w
 
 
-def training(data):
+def training(data, target_col):
     st.write("## 📊 Chia dữ liệu (Training - Validation - Testing)")
 
     # Kiểm tra nếu `target_column` chưa tồn tại
@@ -128,21 +128,21 @@ def training(data):
     #     # Mặc định chọn cột đầu tiên
     #     st.session_state.target_column = data.columns[0]
 
-    if "target_column" not in st.session_state:
-        st.session_state.target_column = data.columns[0]
+    if "target_col" not in st.session_state:
+        st.session_state.target_col = data.columns[0]
 
-    # Cho phép chọn cột mục tiêu nhưng không thay đổi session_state sau khi tạo widget
-    selected_label = st.selectbox("Chọn cột dự đoán", data.columns,
-                                  index=data.columns.get_loc(st.session_state.target_column))
+    # # Cho phép chọn cột mục tiêu nhưng không thay đổi session_state sau khi tạo widget
+    # selected_label = st.selectbox("Chọn cột dự đoán", data.columns,
+    #                               index=data.columns.get_loc(st.session_state.target_column))
 
-    X = data.drop(columns=[selected_label], axis=1)
-    y = data[selected_label]
+    X = data.drop(columns=[target_col], axis=1)
+    y = data[target_col]
 
-    # Chỉ cập nhật session_state khi nút được nhấn
-    if st.button("Xác nhận cột cần dự đoán"):
-        if st.session_state.target_column != selected_label:
-            st.session_state.target_column = selected_label
-            st.success(f"Đã chọn cột: **{selected_label}** làm biến mục tiêu")
+    # # Chỉ cập nhật session_state khi nút được nhấn
+    # if st.button("Xác nhận cột cần dự đoán"):
+    #     if st.session_state.target_col != target_col:
+    #         st.session_state.target_col = target_col
+    #         st.success(f"Đã chọn cột: **{target_col}** làm biến mục tiêu")
 
     # Kiểm tra `st.session_state.data`
     if "data" in st.session_state:
@@ -231,95 +231,95 @@ def training(data):
     st.session_state["run_name"] = f"{model_option}_run_{st.session_state['run_counter']}"
 
     if st.button("Huấn luyện mô hình"):
+        with st.spinner("Mô hình đang được huấn luyện"):
+            # if st.button("Huấn luyện mô hình"):
+            # 🎯 **Tích hợp MLflow**
+            with mlflow.start_run(run_name=f"Train_{st.session_state['run_name']}"):
+                data = st.session_state.data
+                mlflow.log_param("dataset_shape", data.shape)
+                mlflow.log_param("target_column", st.session_state.y.name)
+                mlflow.log_param("test_size", st.session_state.X_test_shape)
+                mlflow.log_param("validation_size",
+                                 st.session_state.X_val_shape)
+                mlflow.log_param("train_size", st.session_state.X_train_shape)
 
-        # if st.button("Huấn luyện mô hình"):
-        # 🎯 **Tích hợp MLflow**
-        with mlflow.start_run(run_name=f"Train_{st.session_state['run_name']}"):
-            data = st.session_state.data
-            mlflow.log_param("dataset_shape", data.shape)
-            mlflow.log_param("target_column", st.session_state.y.name)
-            mlflow.log_param("test_size", st.session_state.X_test_shape)
-            mlflow.log_param("validation_size",
-                             st.session_state.X_val_shape)
-            mlflow.log_param("train_size", st.session_state.X_train_shape)
+                # Lưu dataset tạm thời
+                dataset_path = "dataset.csv"
+                data.to_csv(dataset_path, index=False)
 
-            # Lưu dataset tạm thời
-            dataset_path = "dataset.csv"
-            data.to_csv(dataset_path, index=False)
+                # Log dataset lên MLflow
+                mlflow.log_artifact(dataset_path)
 
-            # Log dataset lên MLflow
-            mlflow.log_artifact(dataset_path)
+                mlflow.log_param("model_option", model_option)
+                mlflow.log_param("n_folds", k)
+                mlflow.log_param("learning_rate", learning_rate)
+                if model_option == "polynomial":
+                    mlflow.log_param("degree", degree)
 
-            mlflow.log_param("model_option", model_option)
-            mlflow.log_param("n_folds", k)
-            mlflow.log_param("learning_rate", learning_rate)
-            if model_option == "polynomial":
-                mlflow.log_param("degree", degree)
+                for fold, (train_idx, valid_idx) in enumerate(kf.split(X_train, y_train)):
+                    X_train_fold, X_valid = X_train.iloc[train_idx], X_train.iloc[valid_idx]
+                    y_train_fold, y_valid = y_train.iloc[train_idx], y_train.iloc[valid_idx]
 
-            for fold, (train_idx, valid_idx) in enumerate(kf.split(X_train, y_train)):
-                X_train_fold, X_valid = X_train.iloc[train_idx], X_train.iloc[valid_idx]
-                y_train_fold, y_valid = y_train.iloc[train_idx], y_train.iloc[valid_idx]
+                    if model_option == "linear":
+                        w = train_multiple_linear_regression(
+                            X_train_fold, y_train_fold, learning_rate=learning_rate)
+                        w = np.array(w).reshape(-1, 1)
+                        X_valid_b = np.c_[
+                            np.ones((len(X_valid), 1)), X_valid.to_numpy()]
+                        y_valid_pred = X_valid_b.dot(w)
+                    else:
+                        X_train_fold = scaler.fit_transform(X_train_fold)
+                        w = train_polynomial_regression(
+                            X_train_fold, y_train_fold, degree, learning_rate=learning_rate)
+                        w = np.array(w).reshape(-1, 1)
+                        X_valid_scaled = scaler.transform(X_valid.to_numpy())
+                        X_valid_poly = np.hstack(
+                            [X_valid_scaled] + [X_valid_scaled**d for d in range(2, degree + 1)])
+                        X_valid_b = np.c_[
+                            np.ones((len(X_valid_poly), 1)), X_valid_poly]
+                        y_valid_pred = X_valid_b.dot(w)
+
+                    mse = mean_squared_error(y_valid, y_valid_pred)
+                    fold_mse.append(mse)
+                    mlflow.log_metric(f"mse_fold_{fold+1}", mse)
+                    print(f"📌 Fold {fold + 1} - MSE: {mse:.4f}")
+
+                avg_mse = np.mean(fold_mse)
 
                 if model_option == "linear":
-                    w = train_multiple_linear_regression(
-                        X_train_fold, y_train_fold, learning_rate=learning_rate)
-                    w = np.array(w).reshape(-1, 1)
-                    X_valid_b = np.c_[
-                        np.ones((len(X_valid), 1)), X_valid.to_numpy()]
-                    y_valid_pred = X_valid_b.dot(w)
+                    final_w = train_multiple_linear_regression(
+                        X_train, y_train, learning_rate=learning_rate)
+                    st.session_state['linear_model'] = final_w
+                    X_test_b = np.c_[
+                        np.ones((len(X_test), 1)), X_test.to_numpy()]
+                    y_test_pred = X_test_b.dot(final_w)
                 else:
-                    X_train_fold = scaler.fit_transform(X_train_fold)
-                    w = train_polynomial_regression(
-                        X_train_fold, y_train_fold, degree, learning_rate=learning_rate)
-                    w = np.array(w).reshape(-1, 1)
-                    X_valid_scaled = scaler.transform(X_valid.to_numpy())
-                    X_valid_poly = np.hstack(
-                        [X_valid_scaled] + [X_valid_scaled**d for d in range(2, degree + 1)])
-                    X_valid_b = np.c_[
-                        np.ones((len(X_valid_poly), 1)), X_valid_poly]
-                    y_valid_pred = X_valid_b.dot(w)
+                    X_train_scaled = scaler.fit_transform(X_train)
+                    final_w = train_polynomial_regression(
+                        X_train_scaled, y_train, degree, learning_rate=learning_rate)
+                    st.session_state['polynomial_model'] = final_w
+                    X_test_scaled = scaler.transform(X_test.to_numpy())
+                    X_test_poly = np.hstack(
+                        [X_test_scaled] + [X_test_scaled**d for d in range(2, degree + 1)])
+                    X_test_b = np.c_[
+                        np.ones((len(X_test_poly), 1)), X_test_poly]
+                    y_test_pred = X_test_b.dot(final_w)
 
-                mse = mean_squared_error(y_valid, y_valid_pred)
-                fold_mse.append(mse)
-                mlflow.log_metric(f"mse_fold_{fold+1}", mse)
-                print(f"📌 Fold {fold + 1} - MSE: {mse:.4f}")
+                test_mse = mean_squared_error(y_test, y_test_pred)
 
-            avg_mse = np.mean(fold_mse)
+                # 📌 **Log các giá trị vào MLflow**
+                mlflow.log_metric("avg_mse", avg_mse)
+                mlflow.log_metric("test_mse", test_mse)
 
-            if model_option == "linear":
-                final_w = train_multiple_linear_regression(
-                    X_train, y_train, learning_rate=learning_rate)
-                st.session_state['linear_model'] = final_w
-                X_test_b = np.c_[
-                    np.ones((len(X_test), 1)), X_test.to_numpy()]
-                y_test_pred = X_test_b.dot(final_w)
-            else:
-                X_train_scaled = scaler.fit_transform(X_train)
-                final_w = train_polynomial_regression(
-                    X_train_scaled, y_train, degree, learning_rate=learning_rate)
-                st.session_state['polynomial_model'] = final_w
-                X_test_scaled = scaler.transform(X_test.to_numpy())
-                X_test_poly = np.hstack(
-                    [X_test_scaled] + [X_test_scaled**d for d in range(2, degree + 1)])
-                X_test_b = np.c_[
-                    np.ones((len(X_test_poly), 1)), X_test_poly]
-                y_test_pred = X_test_b.dot(final_w)
+                # Kết thúc run
+                mlflow.end_run()
 
-            test_mse = mean_squared_error(y_test, y_test_pred)
-
-            # 📌 **Log các giá trị vào MLflow**
-            mlflow.log_metric("avg_mse", avg_mse)
-            mlflow.log_metric("test_mse", test_mse)
-
-            # Kết thúc run
-            mlflow.end_run()
-
-            st.success(f"MSE trung bình qua các folds: {avg_mse:.4f}")
-            st.success(f"MSE trên tập test: {test_mse:.4f}")
-            st.success(
-                f"Log dữ liệu **Train_{st.session_state['run_name']}_{model_option}** thành công!")
-            # st.markdown(
-            #     f"### 🔗 [Truy cập MLflow mục Linear Regression để xem tham số]({st.session_state['mlflow_url']})")
+                st.success(f"MSE trung bình qua các folds: {avg_mse:.4f}")
+                st.success(f"MSE trên tập test: {test_mse:.4f}")
+                st.success(
+                    f"Log dữ liệu **Train_{st.session_state['run_name']}_{model_option}** thành công!")
+                # st.markdown(
+                #     f"### 🔗 [Truy cập MLflow mục Linear Regression để xem tham số]({st.session_state['mlflow_url']})")
 
         return final_w, avg_mse, scaler
     return None, None, None

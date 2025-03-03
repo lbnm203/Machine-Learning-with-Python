@@ -47,7 +47,7 @@ def main():
 
         # ------------- Preprocess Data ------------------
         with data_preprocess:
-            data = preprocess_data(data)
+            data, target_col = preprocess_data(data)
 
         # ------------- Theoretical Background ------------------
         with theory:
@@ -55,7 +55,7 @@ def main():
 
         # ------------- Training Linear Regression ------------------
         with train_process:
-            training(data)
+            training(data, target_col)
 
         # ------------- Demo Application ------------------
         with demo:

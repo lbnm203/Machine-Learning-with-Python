@@ -253,7 +253,7 @@ def scaler_numerical_data(data):
 
         st.dataframe(data)
 
-    return data
+    return data, target_col
 
 
 def preprocess_data(data):
@@ -265,6 +265,6 @@ def preprocess_data(data):
     data = remove_not_required_features(data)
     data = process_missing_values(data)
     data = convert_data_types(data)
-    data = scaler_numerical_data(data)
+    data, target_col = scaler_numerical_data(data)
     data = data.copy()
-    return data
+    return data, target_col
