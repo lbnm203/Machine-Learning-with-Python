@@ -103,10 +103,15 @@ Thuật toán SVD được sử dụng để tính toán PCA:
     - "arpack" (Ưu tiên trung bình, phù hợp với dữ liệu lớn nhưng cần kiểm soát bộ nhớ):
         - Lý do: Tối ưu hóa bộ nhớ, nhưng chậm hơn "randomized" và chỉ hữu ích khi n_features >> n_samples.
     - "full" (Ưu tiên thấp nhất, chỉ dùng với dữ liệu nhỏ):
-        - Lý do: Chính xác nhất nhưng tốn bộ nhớ và thời gian, không phù hợp với dữ liệu lớn như MNIST.
+        - Lý do: Chính xác nhất nhưng tốn bộ nhớ và thời gian, không phù hợp với dữ liệu lớn.
 """)
 
         if st.button("🚀 Chạy PCA"):
+            progress_bar = st.progress(0)
+            for i in range(1, 101):
+                progress_bar.progress(i)
+                time.sleep(0.01)
+            st.write("Quá trình huấn luyện đã hoàn thành!")
             with mlflow.start_run(run_name=st.session_state["run_name"]) as run:
                 mlflow.set_tag("mlflow.runName", st.session_state["run_name"])
                 # Áp dụng PCA

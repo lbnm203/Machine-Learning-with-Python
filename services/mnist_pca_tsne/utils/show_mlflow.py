@@ -51,7 +51,8 @@ def show_experiment_selector():
     run_names = list(run_name_to_id.keys())
 
     # Chọn run theo run_name
-    selected_run_name = st.selectbox("Chọn một run:", run_names)
+    selected_run_name = st.selectbox(
+        "Chọn một run:", run_names, format_func=lambda x: f"{x} ({run_name_to_id[x][:8]})")
     selected_run_id = run_name_to_id[selected_run_name]
 
     # Hiển thị thông tin chi tiết của run được chọn
