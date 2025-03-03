@@ -11,12 +11,12 @@ import time
 
 
 def input_mlflow():
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URL)
-    st.session_state['mlflow_url'] = MLFLOW_TRACKING_URL
+    mlflow.set_tracking_uri(st.secrets["MLFLOW_TRACKING_URL"])
+    st.session_state['mlflow_url'] = st.secrets["MLFLOW_TRACKING_URL"]
 
-    os.environ["MLFLOW_TRACKING_URI"] = MLFLOW_TRACKING_URL
-    os.environ["MLFLOW_TRACKING_USERNAME"] = MLFLOW_TRACKING_USERNAME
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = MLFLOW_TRACKING_PASSWORD
+    os.environ["MLFLOW_TRACKING_URI"] = st.secrets["MLFLOW_TRACKING_URL"]
+    os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["MLFLOW_TRACKING_USERNAME"]
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["MLFLOW_TRACKING_PASSWORD"]
 
     mlflow.set_experiment("MNIST_PCA_t-SNE")
 
@@ -117,6 +117,10 @@ Thuật toán SVD được sử dụng để tính toán PCA:
                 mlflow.log_param("svd_solver", svd_solver)
                 mlflow.log_param("X_train_pca", X_train_pca)
                 mlflow.log_metric("explained_variance", explained_variance)
+
+                # Lưu PCA data
+                np.save("X_train_pca.npy", X_train_pca)
+                mlflow.log_artifact("X_train_pca.npy")
 
             with col2:
                 st.subheader(
@@ -242,6 +246,9 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                 mlflow.log_param("n_iter", n_iter)
                 mlflow.log_param("metric", metric)
                 mlflow.log_param("X_train_tsne", X_train_tsne)
+
+                np.save("X_train_tsne.npy", X_train_tsne)
+                mlflow.log_artifact("X_train_tsne.npy")
 
                 with col2:
                     st.subheader(
