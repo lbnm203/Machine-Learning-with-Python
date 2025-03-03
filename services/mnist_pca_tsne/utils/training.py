@@ -94,6 +94,18 @@ Thuật toán SVD được sử dụng để tính toán PCA:
 - `randomized`: Tăng tốc trên dữ liệu lớn, nhưng có thể ít chính xác hơn với dữ liệu nhỏ.
                 """)
 
+            st.warning("""
+- Thứ tự ưu tiên :
+    - "auto" (Mặc định, ưu tiên cao nhất):
+        - Lý do: Tự động chọn thuật toán tốt nhất dựa trên dữ liệu, không cần can thiệp thủ công, phù hợp với hầu hết các trường hợp.
+    - "randomized" (Ưu tiên cao, đặc biệt với dữ liệu lớn):
+        - Lý do: Nhanh nhất trên dữ liệu lớn, phù hợp với MNIST hoặc các tập dữ liệu có hàng ngàn mẫu và đặc trưng.
+    - "arpack" (Ưu tiên trung bình, phù hợp với dữ liệu lớn nhưng cần kiểm soát bộ nhớ):
+        - Lý do: Tối ưu hóa bộ nhớ, nhưng chậm hơn "randomized" và chỉ hữu ích khi n_features >> n_samples.
+    - "full" (Ưu tiên thấp nhất, chỉ dùng với dữ liệu nhỏ):
+        - Lý do: Chính xác nhất nhưng tốn bộ nhớ và thời gian, không phù hợp với dữ liệu lớn như MNIST.
+""")
+
         if st.button("🚀 Chạy PCA"):
             with mlflow.start_run(run_name=st.session_state["run_name"]) as run:
                 mlflow.set_tag("mlflow.runName", st.session_state["run_name"])
@@ -178,6 +190,11 @@ Thuật toán SVD được sử dụng để tính toán PCA:
             st.success(
                 f"Tổng số phương sai giả thích: {sum(pca.explained_variance_ratio_)}")
 
+            st.success(
+                f"Log tham số cho **Train_{st.session_state['run_name']}**!")
+            st.markdown(
+                f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
+
             mlflow.end_run()
 
     elif dim_reduction_method == "t-SNE":
@@ -259,10 +276,9 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                     st.pyplot(fig2)
                     fig2.savefig("tnse_result.png")
                     mlflow.log_artifact("tnse_result.png")
+            st.success(
+                f"Log tham số cho **Train_{st.session_state['run_name']}**!")
+            st.markdown(
+                f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
 
             mlflow.end_run()
-
-    st.success(
-        f"Log tham số cho **Train_{st.session_state['run_name']}**!")
-    st.markdown(
-        f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
