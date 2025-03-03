@@ -1,8 +1,7 @@
 from datetime import datetime
 import streamlit as st
 import mlflow
-from datetime import datetime
-
+from mlflow.tracking import MlflowClient
 
 def show_experiment_selector():
     st.title("MLflow Tracking")
@@ -56,6 +55,8 @@ def show_experiment_selector():
     # Hiển thị thông tin chi tiết của run được chọn
     selected_run = mlflow.get_run(selected_run_id)
 
+    client = MlflowClient()
+
     if selected_run:
         st.subheader(f"📌 Thông tin Run: {selected_run_name}")
         st.write(f"**Run ID:** {selected_run_id}")
@@ -70,6 +71,23 @@ def show_experiment_selector():
             start_time = "Không có thông tin"
 
         st.write(f"**Thời gian chạy:** {start_time}")
+
+        # Thêm widget để cập nhật tên run
+        new_run_name = st.text_input("Cập nhật tên Run:", selected_run_name)
+        if st.button("Cập nhật tên"):
+            try:
+                client.set_tag(selected_run_id, "mlflow.runName", new_run_name)
+                st.success(f"Đã cập nhật tên run thành: {new_run_name}")
+            except Exception as e:
+                st.error(f"Lỗi khi cập nhật tên: {e}")
+
+        # Thêm nút xóa run
+        if st.button("Xóa Run"):
+            try:
+                client.delete_run(selected_run_id)
+                st.success(f"Đã xóa run: {selected_run_name}")
+            except Exception as e:
+                st.error(f"Lỗi khi xóa run: {e}")
 
         # Hiển thị thông số đã log
         params = selected_run.data.params

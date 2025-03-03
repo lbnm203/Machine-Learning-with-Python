@@ -101,7 +101,8 @@ Thuật toán SVD được sử dụng để tính toán PCA:
                 """)
 
         if st.button("🚀 Chạy PCA"):
-            with mlflow.start_run(run_name=st.session_state["run_name"]):
+            with mlflow.start_run(run_name=st.session_state["run_name"]) as run:
+                mlflow.set_tag("mlflow.runName", st.session_state["run_name"])
                 # Áp dụng PCA
                 pca = PCA(n_components=n_components,
                           svd_solver=svd_solver, random_state=42)
@@ -145,17 +146,12 @@ Thuật toán SVD được sử dụng để tính toán PCA:
                 # Trực quan hóa phương sai giải thích
                 st.subheader(
                     "Kết quả trực quan hóa", help="""
-    - Trong PCA:
-        - Phương sai giải thích (explained variance) là lượng thông tin (hay sự biến thiên) mà mỗi 
-    thành phần chính (principal component) giữ lại từ dữ liệu gốc.
-            - Ý nghĩa: Phương sai giải thích cho biết mức độ quan trọng của từng thành phần chính trong việc biểu 
-    diễn dữ liệu gốc. Thành phần có phương sai lớn hơn là quan trọng hơn vì nó giữ lại nhiều thông tin hơn về sự biến thiên của dữ liệu.
-
-        - Tỷ lệ phương sai giải thích là phần trăm phương sai mà mỗi thành phần chính đóng góp vào tổng phương sai 
-        của dữ liệu gốc.
-            - Ý nghĩa: Tỷ lệ này cho bạn biết mỗi thành phần chính đóng góp bao nhiêu phần trăm vào tổng thông tin của dữ liệu, giúp dễ dàng đánh giá xem 
-            bao nhiêu thành phần cần thiết để giữ lại một lượng thông tin nhất định (ví dụ: 90% hoặc 95%). 
-    """)
+- Trong PCA:
+    - Tỷ lệ phương sai giải thích là phần trăm phương sai mà mỗi thành phần chính đóng góp vào tổng phương sai 
+    của dữ liệu gốc.
+        - Ý nghĩa: Tỷ lệ này cho bạn biết mỗi thành phần chính đóng góp bao nhiêu phần trăm vào tổng thông tin của dữ liệu, giúp dễ dàng đánh giá xem 
+        bao nhiêu thành phần cần thiết để giữ lại một lượng thông tin nhất định (ví dụ: 90% hoặc 95%). 
+""")
 
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -231,7 +227,8 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                 progress_bar.progress(i)
                 time.sleep(0.01)
             st.write("Quá trình huấn luyện đã hoàn thành!")
-            with mlflow.start_run(run_name=st.session_state["run_name"]):
+            with mlflow.start_run(run_name=st.session_state["run_name"]) as run:
+                mlflow.set_tag("mlflow.runName", st.session_state["run_name"])
                 # # Áp dụng t-SNE
                 # tsne = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
                 #             n_iter=n_iter, metric=metric, random_state=42)
@@ -269,14 +266,9 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                     fig2.savefig("tnse_result.png")
                     mlflow.log_artifact("tnse_result.png")
 
-            st.success(
-                f"Log tham số cho **Train_{st.session_state['run_name']}**!")
-            st.markdown(
-                f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
-
             mlflow.end_run()
 
-            # st.success(
-            #     f"Log tham số cho **Train_{st.session_state['run_name']}**!")
-            # st.markdown(
-            #     f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
+    st.success(
+        f"Log tham số cho **Train_{st.session_state['run_name']}**!")
+    st.markdown(
+        f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
