@@ -3,6 +3,7 @@ import streamlit as st
 import mlflow
 from mlflow.tracking import MlflowClient
 
+
 def show_experiment_selector():
     st.title("MLflow Tracking")
 
@@ -45,7 +46,8 @@ def show_experiment_selector():
         run_info.append((run_name, run_id))
 
     # Tạo dictionary để map run_name -> run_id
-    run_name_to_id = dict(run_info)
+    # run_name_to_id = dict(run_info)
+    run_name_to_id = {run_name: run_id for run_name, run_id in run_info}
     run_names = list(run_name_to_id.keys())
 
     # Chọn run theo run_name
