@@ -36,10 +36,10 @@ def load_model(path):
 def demo_app():
     st.write("## Demo APP")
     models = {
-        "SVM với Linear": "./services/mnist_classfier/models/svm_mnist_linear.joblib",
-        "SVM với RBF": "./services/mnist_classfier/models//svm_mnist_rbf.joblib",
-        "SVM với Poly": "./services/mnist_classfier/models/svm_mnist_poly.joblib",
-        "SVM với Sigmoid": "./services/mnist_classfier/models/svm_mnist_sigmoid.joblib",
+        "SVM với Linear (mô hình có sẵn)": "./services/mnist_classfier/models/svm_mnist_linear.joblib",
+        "SVM với RBF (mô hình có sẵn)": "./services/mnist_classfier/models//svm_mnist_rbf.joblib",
+        "SVM với Poly (mô hình có sẵn)": "./services/mnist_classfier/models/svm_mnist_poly.joblib",
+        "SVM với Sigmoid (mô hình có sẵn)": "./services/mnist_classfier/models/svm_mnist_sigmoid.joblib",
     }
 
     # Lấy tên mô hình từ session_state
@@ -93,5 +93,12 @@ def demo_app():
                     # Dự đoán
                     prediction = model.predict(img)
                     st.subheader(f"🔢 Dự đoán: {prediction[0]}")
+                    # Tính toán độ tin cậy
+                    if hasattr(model, "predict_proba"):
+                        proba = model.predict_proba(img)
+                        confidence = np.max(proba) * 100
+                        st.write(f"Độ tin cậy: {confidence:.2f}%")
+                    else:
+                        st.warning("Mô hình không hỗ trợ tính toán độ tin cậy.")
                 else:
                     st.error("⚠️ Hãy vẽ một số trước khi bấm Dự đoán!")
