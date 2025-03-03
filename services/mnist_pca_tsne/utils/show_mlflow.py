@@ -1,128 +1,84 @@
-import mlflow
-from mlflow.tracking import MlflowClient
+from datetime import datetime    
 import streamlit as st
-import os
-
-# MLFLOW_TRACKING_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
-# Kiểm tra và lấy thông tin từ st.secrets
-if "MLFLOW_TRACKING_URI" in st.secrets and "MLFLOW_TRACKING_USERNAME" in st.secrets and "MLFLOW_TRACKING_PASSWORD" in st.secrets:
-    mlflow_tracking_uri = st.secrets["MLFLOW_TRACKING_URI"]
-    mlflow_username = st.secrets["MLFLOW_TRACKING_USERNAME"]
-    mlflow_password = st.secrets["MLFLOW_TRACKING_PASSWORD"]
-
-    # Thiết lập MLFlow Tracking URI
-    mlflow.set_tracking_uri(mlflow_tracking_uri)
-
-    # Thiết lập biến môi trường cho xác thực (nếu server MLFlow yêu cầu)
-    os.environ["MLFLOW_TRACKING_URL"] = mlflow_tracking_uri
-    os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
-
-    # Lưu thông tin vào session_state (nếu cần)
-    st.session_state["mlflow_url"] = mlflow_tracking_uri  # Sử dụng biến đã được định nghĩa
-
-    st.write("Đã cấu hình MLFlow với thông tin xác thực từ st.secrets.")
-else:
-    # Nếu không có thông tin xác thực, sử dụng URI mặc định (local hoặc không xác thực)
-    # default_uri = "http://localhost:5000"  # Hoặc URI khác phù hợp
-    # mlflow.set_tracking_uri(default_uri)
-    st.warning("Không tìm thấy thông tin xác thực MLFlow trong st.secrets. Sử dụng URI mặc định không xác thực.")
-
+import mlflow
+from datetime import datetime
 
 def show_experiment_selector():
-    st.header("MFlow Tracking")
-    try:
-        client = MlflowClient()
-        experiment_name = "MNIST_PCA_t-SNE"
+    st.title("MLflow Tracking")
+    
+    # Kết nối với DAGsHub MLflow Tracking
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URL)
+    
+    # Lấy danh sách tất cả experiments
+    experiment_name = "MNIST_PCA_t-SNE"
+    experiments = mlflow.search_experiments()
+    selected_experiment = next((exp for exp in experiments if exp.name == experiment_name), None)
 
-        # Kiểm tra nếu experiment đã tồn tại
-        experiment = client.get_experiment_by_name(experiment_name)
-        if experiment is None:
-            experiment_id = client.create_experiment(experiment_name)
-            st.success(f"Experiment mới được tạo với ID: {experiment_id}")
+    if not selected_experiment:
+        st.error(f"❌ Experiment '{experiment_name}' không tồn tại!")
+        return
+
+    st.subheader(f"Experiment: {experiment_name}")
+    st.write(f"**Experiment ID:** {selected_experiment.experiment_id}")
+    st.write(f"**Trạng thái:** {'Active' if selected_experiment.lifecycle_stage == 'active' else 'Deleted'}")
+    st.write(f"**Vị trí lưu:** {selected_experiment.artifact_location}")
+
+    # Lấy danh sách runs trong experiment
+    runs = mlflow.search_runs(experiment_ids=[selected_experiment.experiment_id])
+
+    if runs.empty:
+        st.warning("⚠ Không có runs nào trong experiment này.")
+        return
+
+    st.write("### Danh sách các Runs gần đây:")
+    
+    # Lấy danh sách run_name từ params
+    run_info = []
+    for _, run in runs.iterrows():
+        run_id = run["run_id"]
+        run_params = mlflow.get_run(run_id).data.params
+        run_name = run_params.get("run_name", f"Run {run_id[:8]}")
+        run_info.append((run_name, run_id))
+    
+    # Tạo dictionary để map run_name -> run_id
+    run_name_to_id = dict(run_info)
+    run_names = list(run_name_to_id.keys())
+    
+    # Chọn run theo run_name
+    selected_run_name = st.selectbox("Chọn một run:", run_names)
+    selected_run_id = run_name_to_id[selected_run_name]
+
+    # Hiển thị thông tin chi tiết của run được chọn
+    selected_run = mlflow.get_run(selected_run_id)
+
+    if selected_run:
+        st.subheader(f"📌 Thông tin Run: {selected_run_name}")
+        st.write(f"**Run ID:** {selected_run_id}")
+        st.write(f"**Trạng thái:** {selected_run.info.status}")
+        
+        start_time_ms = selected_run.info.start_time  # Thời gian lưu dưới dạng milliseconds
+        if start_time_ms:
+            start_time = datetime.fromtimestamp(start_time_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
         else:
-            experiment_id = experiment.experiment_id
-            # st.info(f"Đang sử dụng experiment ID: {experiment_id}")
-            st.info(f"Đang sử dụng experiment ID: {experiment_id}")
+            start_time = "Không có thông tin"
+        
+        st.write(f"**Thời gian chạy:** {start_time}")
 
-        mlflow.set_experiment(experiment_name)
+        # Hiển thị thông số đã log
+        params = selected_run.data.params
+        metrics = selected_run.data.metrics
 
-        # Truy vấn các run trong experiment
-        runs = client.search_runs(experiment_ids=[experiment_id])
+        if params:
+            st.write("### ⚙️ Parameters:")
+            st.json(params)
 
-        # 1) Chọn và đổi tên Run Name
-        st.subheader("Đổi tên lần chạy thực thi")
-        if runs:
-            run_options = {run.info.run_id: f"{run.data.tags.get('mlflow.runName', 'Unnamed')} - {run.info.run_id}"
-                           for run in runs}
-            selected_run_id_for_rename = st.selectbox("Chọn Run để đổi tên:",
-                                                      options=list(
-                                                          run_options.keys()),
-                                                      format_func=lambda x: run_options[x])
-            new_run_name = st.text_input("Nhập tên mới cho Run:",
-                                         value=run_options[selected_run_id_for_rename].split(" - ")[0])
-            if st.button("Cập nhật"):
-                if new_run_name.strip():
-                    client.set_tag(selected_run_id_for_rename,
-                                   "mlflow.runName", new_run_name.strip())
-                    st.success(
-                        f"Đã cập nhật tên lần chạy thành: {new_run_name.strip()}")
-                else:
-                    st.warning("Vui lòng nhập tên mới cho Run.")
-        else:
-            st.info("Chưa có lần chạy nào được log.")
-
-        # 2) Xóa Run
-        st.subheader("Danh sách lần chạy")
-        if runs:
-            selected_run_id_to_delete = st.selectbox("",
-                                                     options=list(
-                                                         run_options.keys()),
-                                                     format_func=lambda x: run_options[x])
-            if st.button("Xóa", key="delete_run"):
-                client.delete_run(selected_run_id_to_delete)
-                st.success(
-                    f"Xóa lần chạy {run_options[selected_run_id_to_delete]} thành công!")
-                st.experimental_rerun()  # Tự động làm mới giao diện
-        else:
-            st.info("Chưa có lần chạy nào để xóa.")
-
-        # 3) Danh sách các thí nghiệm
-        st.subheader("Danh sách các lần chạy đã log")
-        if runs:
-            selected_run_id = st.selectbox("Chọn Run để xem chi tiết:",
-                                           options=list(run_options.keys()),
-                                           format_func=lambda x: run_options[x])
-
-            # 4) Hiển thị thông tin chi tiết của Run được chọn
-            selected_run = client.get_run(selected_run_id)
-            st.write(f"**ID:** {selected_run_id}")
-            st.write(
-                f"**Name:** {selected_run.data.tags.get('mlflow.runName', 'Unnamed')}")
-
-            st.markdown("### Tham số đã log")
-            st.json(selected_run.data.params)
-
-            st.markdown("### Chỉ số đã log")
-            metrics = {
-                "n_components": selected_run.data.metrics.get("n_components"),
-                "perplexity": selected_run.data.metrics.get("perplexity"),
-                "learning_rate": selected_run.data.metrics.get("learning_rate"),
-                "n_iter": selected_run.data.metrics.get("n_iter"),
-                "metric": selected_run.data.metrics.get("metric"),
-                "svd_solver": selected_run.data.metrics.get("svd_solver"),
-            }
+        if metrics:
+            st.write("### 📊 Metrics:")
             st.json(metrics)
 
-            # 5) Nút bấm mở MLflow UI
-            st.subheader("Truy cập MLflow UI")
-            # mlflow_url = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow/"
-            if st.button("Mở MLflow UI"):
-                st.markdown(
-                    f'**[Click để mở MLflow UI]({mlflow_tracking_uri})**')
-        else:
-            st.info(
-                "Chưa có lần chạy nào được log. Vui lòng huấn luyện mô hình trước.")
-
-    except Exception as e:
-        st.error(f"Không thể kết nối với MLflow: {e}")
+        # # Kiểm tra và hiển thị dataset artifact
+        # dataset_path = f"{selected_experiment.artifact_location}/{selected_run_id}/artifacts/dataset.npy"
+        # st.write("### 📂 Dataset:")
+        # st.write(f"📥 [Tải dataset]({dataset_path})")
+    else:
+        st.warning("⚠ Không tìm thấy thông tin cho run này.")

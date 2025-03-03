@@ -10,6 +10,17 @@ import numpy as np
 import time
 
 
+def input_mlflow():
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URL)
+    st.session_state['mlflow_url'] = MLFLOW_TRACKING_URL
+
+    os.environ["MLFLOW_TRACKING_URI"] = MLFLOW_TRACKING_URL
+    os.environ["MLFLOW_TRACKING_USERNAME"] = MLFLOW_TRACKING_USERNAME
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = MLFLOW_TRACKING_PASSWORD
+
+    mlflow.set_experiment("MNIST_PCA_t-SNE")
+
+
 @st.cache_data
 def fit_tnse(X, n_components, perplexity, learning_rate, n_iter, metric):
     tsne = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
@@ -54,6 +65,11 @@ def train_pca(X, y):
     X_train = X_train.reshape(-1, 28 * 28) / 255.0
     X_test = X_test.reshape(-1, 28 * 28) / 255.0
 
+    input_mlflow()
+
+    run_name = st.text_input(" Nhập tên Run:", "Default Run")
+    st.session_state["run_name"] = run_name if run_name else "default_run"
+
     dim_reduction_method = st.selectbox(
         "**Chọn phương pháp rút gọn chiều dữ liệu:**", ["PCA", "t-SNE"])
     if dim_reduction_method == "PCA":
@@ -79,7 +95,7 @@ Thuật toán SVD được sử dụng để tính toán PCA:
                 """)
 
         if st.button("🚀 Chạy PCA"):
-            with mlflow.start_run():
+            with mlflow.start_run(run_name=st.session_state["run_name"]):
                 # Áp dụng PCA
                 pca = PCA(n_components=n_components,
                           svd_solver=svd_solver, random_state=42)
@@ -96,7 +112,7 @@ Thuật toán SVD được sử dụng để tính toán PCA:
                 explained_variance = np.sum(pca.explained_variance_ratio_)
 
                 # Log tham số vào MLflow
-                mlflow.log_param("algorithm", "PCA")
+                mlflow.log_param("algorithm", dim_reduction_method)
                 mlflow.log_param("n_components", n_components)
                 mlflow.log_param("svd_solver", svd_solver)
                 mlflow.log_param("X_train_pca", X_train_pca)
@@ -205,7 +221,7 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                 progress_bar.progress(i)
                 time.sleep(0.01)
             st.write("Quá trình huấn luyện đã hoàn thành!")
-            with mlflow.start_run():
+            with mlflow.start_run(run_name=st.session_state["run_name"]):
                 # # Áp dụng t-SNE
                 # tsne = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
                 #             n_iter=n_iter, metric=metric, random_state=42)
@@ -239,4 +255,10 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                     st.pyplot(fig2)
                     fig2.savefig("tnse_result.png")
                     mlflow.log_artifact("tnse_result.png")
+
             mlflow.end_run()
+
+            st.success(
+                f"Log tham số cho **Train_{st.session_state['run_name']}**!")
+            st.markdown(
+                f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
