@@ -98,11 +98,13 @@ def train_process(X, y):
 
     if model_choice == "Decision Tree":
         st.markdown("""
-        - **Tham số mô hình:**  
-            - **max_depth**: Độ sâu tối đa của cây.  
-                - **Giá trị nhỏ**: Tránh overfitting nhưng có thể underfitting.  
-                - **Giá trị lớn**: Dễ bị overfitting vì khó học được các mẫu phức tạp trong dữ liệu 
-        """)
+- **Tham số mô hình:**  
+    - **max_depth**: Độ sâu tối đa của cây. """, help="""
+- **Giá trị nhỏ (3 - 7)**: Tránh overfitting nhưng có thể underfitting.  
+    - Cây chỉ học được những đặc trưng đơn giản, không đi sâu vào các mẫu dữ liệu phức tạp.
+- **Giá trị lớn (>= 10)**: Dễ bị overfitting vì khó học được các mẫu phức tạp trong dữ liệu 
+    - Cây sẽ có khả năng học rất chi tiết các mẫu trong dữ liệu, bao gồm cả nhiễu (noise).
+            """)
         st.markdown("""- criterion: xác định cách thức cây quyết định chọn thuộc tính để phân nhánh""", help="""
 - Gini:
     - Mục tiêu của Gini là chọn thuộc tính phân nhánh sao cho dữ liệu sau khi chia có độ thuần khiết cao nhất.
