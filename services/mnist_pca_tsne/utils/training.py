@@ -15,12 +15,6 @@ def input_mlflow():
     mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
     st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
     try:
-        # Kiểm tra xem Streamlit có secrets không
-        if "DAGSHUB_MLFLOW_URI" not in st.secrets:
-            st.error(
-                "❌ Không tìm thấy `DAGSHUB_MLFLOW_URI` trong secrets. Hãy kiểm tra Streamlit Cloud settings.")
-            return
-
         os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
         os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
@@ -77,8 +71,10 @@ def train_pca(X, y):
 
     input_mlflow()
 
-    run_name = st.text_input(" Nhập tên Run:", "Default Run")
-    st.session_state["run_name"] = run_name if run_name else "default_run"
+    run_name = st.text_input("Nhập tên Run:", "Default Run")
+    if not run_name:
+        run_name = "default_run"
+    st.session_state["run_name"] = run_name
 
     dim_reduction_method = st.selectbox(
         "**Chọn phương pháp rút gọn chiều dữ liệu:**", ["PCA", "t-SNE"])
@@ -132,34 +128,34 @@ Thuật toán SVD được sử dụng để tính toán PCA:
                 np.save("X_train_pca.npy", X_train_pca)
                 mlflow.log_artifact("X_train_pca.npy")
 
-            with col2:
+                with col2:
+                    st.subheader(
+                        f"Hình ảnh kết quả: Giảm xuống còn {n_components} chiều dữ liệu sử dụng phương pháp {dim_reduction_method}")
+                    fig2, ax = plt.subplots()
+                    scatter = ax.scatter(X_train_pca[:, 0], X_train_pca[:, 1], c=y_train[:X_train_pca.shape[0]].astype(
+                        int), cmap='tab10', alpha=0.6)
+                    legend = ax.legend(
+                        *scatter.legend_elements(), title="Digits")
+                    ax.add_artist(legend)
+                    st.pyplot(fig2)
+                    fig2.savefig("pca_result.png")
+                    mlflow.log_artifact("pca_result.png")
+
+                st.write("---")
+                # Trực quan hóa phương sai giải thích
                 st.subheader(
-                    f"Hình ảnh kết quả: Giảm xuống còn {n_components} chiều dữ liệu sử dụng phương pháp {dim_reduction_method}")
-                fig2, ax = plt.subplots()
-                scatter = ax.scatter(X_train_pca[:, 0], X_train_pca[:, 1], c=y_train[:X_train_pca.shape[0]].astype(
-                    int), cmap='tab10', alpha=0.6)
-                legend = ax.legend(
-                    *scatter.legend_elements(), title="Digits")
-                ax.add_artist(legend)
-                st.pyplot(fig2)
-                fig2.savefig("pca_result.png")
-                mlflow.log_artifact("pca_result.png")
+                    "Kết quả trực quan hóa", help="""
+    - Trong PCA:
+        - Phương sai giải thích (explained variance) là lượng thông tin (hay sự biến thiên) mà mỗi 
+    thành phần chính (principal component) giữ lại từ dữ liệu gốc.
+            - Ý nghĩa: Phương sai giải thích cho biết mức độ quan trọng của từng thành phần chính trong việc biểu 
+    diễn dữ liệu gốc. Thành phần có phương sai lớn hơn là quan trọng hơn vì nó giữ lại nhiều thông tin hơn về sự biến thiên của dữ liệu.
 
-            st.write("---")
-            # Trực quan hóa phương sai giải thích
-            st.subheader(
-                "Kết quả trực quan hóa", help="""
-- Trong PCA:
-    - Phương sai giải thích (explained variance) là lượng thông tin (hay sự biến thiên) mà mỗi 
-thành phần chính (principal component) giữ lại từ dữ liệu gốc.
-        - Ý nghĩa: Phương sai giải thích cho biết mức độ quan trọng của từng thành phần chính trong việc biểu 
-diễn dữ liệu gốc. Thành phần có phương sai lớn hơn là quan trọng hơn vì nó giữ lại nhiều thông tin hơn về sự biến thiên của dữ liệu.
-
-    - Tỷ lệ phương sai giải thích là phần trăm phương sai mà mỗi thành phần chính đóng góp vào tổng phương sai 
-    của dữ liệu gốc.
-        - Ý nghĩa: Tỷ lệ này cho bạn biết mỗi thành phần chính đóng góp bao nhiêu phần trăm vào tổng thông tin của dữ liệu, giúp dễ dàng đánh giá xem 
-        bao nhiêu thành phần cần thiết để giữ lại một lượng thông tin nhất định (ví dụ: 90% hoặc 95%). 
-""")
+        - Tỷ lệ phương sai giải thích là phần trăm phương sai mà mỗi thành phần chính đóng góp vào tổng phương sai 
+        của dữ liệu gốc.
+            - Ý nghĩa: Tỷ lệ này cho bạn biết mỗi thành phần chính đóng góp bao nhiêu phần trăm vào tổng thông tin của dữ liệu, giúp dễ dàng đánh giá xem 
+            bao nhiêu thành phần cần thiết để giữ lại một lượng thông tin nhất định (ví dụ: 90% hoặc 95%). 
+    """)
 
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -273,9 +269,14 @@ Chọn dựa trên kích thước dữ liệu và yêu cầu tốc độ.
                     fig2.savefig("tnse_result.png")
                     mlflow.log_artifact("tnse_result.png")
 
-            mlflow.end_run()
-
             st.success(
                 f"Log tham số cho **Train_{st.session_state['run_name']}**!")
             st.markdown(
                 f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
+
+            mlflow.end_run()
+
+            # st.success(
+            #     f"Log tham số cho **Train_{st.session_state['run_name']}**!")
+            # st.markdown(
+            #     f"### 🔗 [Truy cập MLflow DAGsHub]({st.session_state['mlflow_url']})")
