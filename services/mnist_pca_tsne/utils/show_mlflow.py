@@ -80,6 +80,8 @@ def show_experiment_selector():
             try:
                 client.set_tag(selected_run_id, "mlflow.runName", new_run_name)
                 st.success(f"Đã cập nhật tên run thành: {new_run_name}")
+                # Cập nhật lại selected_run_name để hiển thị tên mới
+                selected_run_name = new_run_name
             except Exception as e:
                 st.error(f"Lỗi khi cập nhật tên: {e}")
 
