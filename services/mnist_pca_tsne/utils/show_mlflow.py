@@ -9,7 +9,7 @@ def show_experiment_selector():
 
     # Kết nối với DAGsHub MLflow Tracking
     mlflow.set_tracking_uri(
-        "https://dagshub.com/Phuocbinh2003/Hoc_may_python.mlflow")
+        "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow/")
 
     # Lấy danh sách tất cả experiments
     experiment_name = "MNIST_PCA_t-SNE"
