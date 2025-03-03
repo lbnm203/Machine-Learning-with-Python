@@ -221,7 +221,7 @@ def scaler_numerical_data(data):
 
     if not numerical_cols:
         st.success("✅ Không có cột số nào để chuẩn hóa!")
-        return data
+        return data, None
 
     # Cho phép người dùng chọn các cột cần chuẩn hóa
     target_col = st.selectbox("Chọn cột mục tiêu:",
@@ -239,7 +239,7 @@ def scaler_numerical_data(data):
 
     if not cols_to_scale:
         st.warning("⚠️ Hãy chọn ít nhất một cột để chuẩn hóa!")
-        return data
+        return data, target_col
 
     if st.button("Chuẩn hóa"):
         scaler = StandardScaler()
