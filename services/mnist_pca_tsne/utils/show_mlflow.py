@@ -14,6 +14,7 @@ if "MLFLOW_TRACKING_URI" in st.secrets and "MLFLOW_TRACKING_USERNAME" in st.secr
     mlflow.set_tracking_uri(mlflow_tracking_uri)
 
     # Thiết lập biến môi trường cho xác thực (nếu server MLFlow yêu cầu)
+    os.environ["MLFLOW_TRACKING_URL"] = mlflow_tracking_uri
     os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
     os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 
@@ -118,7 +119,7 @@ def show_experiment_selector():
             # mlflow_url = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow/"
             if st.button("Mở MLflow UI"):
                 st.markdown(
-                    f'**[Click để mở MLflow UI]({MLFLOW_TRACKING_URI})**')
+                    f'**[Click để mở MLflow UI]({mlflow_tracking_uri})**')
         else:
             st.info(
                 "Chưa có lần chạy nào được log. Vui lòng huấn luyện mô hình trước.")
