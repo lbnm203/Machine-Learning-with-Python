@@ -11,21 +11,18 @@ import time
 
 
 def input_mlflow():
+    DAGSHUB_MLFLOW_URI = "https://dagshub.com/Phuocbinh2003/Hoc_may_python.mlflow"
+    mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+    st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
     try:
         # Kiểm tra xem Streamlit có secrets không
-        if "MLFLOW_TRACKING_URL" not in st.secrets:
+        if "DAGSHUB_MLFLOW_URI" not in st.secrets:
             st.error(
-                "❌ Không tìm thấy `MLFLOW_TRACKING_URL` trong secrets. Hãy kiểm tra Streamlit Cloud settings.")
+                "❌ Không tìm thấy `DAGSHUB_MLFLOW_URI` trong secrets. Hãy kiểm tra Streamlit Cloud settings.")
             return
 
-        # Cập nhật MLflow Tracking URI từ secrets
-        mlflow.set_tracking_uri(st.secrets["MLFLOW_TRACKING_URL"])
-        st.session_state['mlflow_url'] = st.secrets["MLFLOW_TRACKING_URL"]
-
-        # Cập nhật biến môi trường (nếu cần)
-        os.environ["MLFLOW_TRACKING_URI"] = st.secrets["MLFLOW_TRACKING_URL"]
-        os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["MLFLOW_TRACKING_USERNAME"]
-        os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+        os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
+        os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
         mlflow.set_experiment("MNIST_PCA_t-SNE")
         st.success("✅ Đã kết nối thành công với MLflow!")
