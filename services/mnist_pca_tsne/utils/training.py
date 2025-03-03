@@ -14,15 +14,9 @@ def input_mlflow():
     DAGSHUB_MLFLOW_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow/"
     mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
     st.session_state['mlflow_url'] = DAGSHUB_MLFLOW_URI
-    try:
-        os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
-        os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
-
-        mlflow.set_experiment("MNIST_PCA_t-SNE")
-        st.success("✅ Đã kết nối thành công với MLflow!")
-
-    except Exception as e:
-        st.error(f"🚨 Lỗi khi kết nối MLflow: {e}")
+    os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
+    mlflow.set_experiment("MNIST_PCA_t-SNE")
 
 
 @st.cache_data
