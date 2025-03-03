@@ -155,29 +155,27 @@ def training(data, target_col):
     val_size = st.slider("Chọn % validation", 0, 50, 15)
     remaining_size = 100 - test_size
 
-    if st.button("Chia dữ liệu"):
+    stratify_option = y if y.nunique() > 1 else None
+    X_train_full, X_test, y_train_full, y_test = train_test_split(
+        X, y, test_size=test_size/100, stratify=stratify_option, random_state=42
+    )
 
-        stratify_option = y if y.nunique() > 1 else None
-        X_train_full, X_test, y_train_full, y_test = train_test_split(
-            X, y, test_size=test_size/100, stratify=stratify_option, random_state=42
-        )
+    stratify_option = y_train_full if y_train_full.nunique() > 1 else None
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train_full, y_train_full, test_size=val_size / (100 - test_size),
+        stratify=stratify_option, random_state=42
+    )
 
-        stratify_option = y_train_full if y_train_full.nunique() > 1 else None
-        X_train, X_val, y_train, y_val = train_test_split(
-            X_train_full, y_train_full, test_size=val_size / (100 - test_size),
-            stratify=stratify_option, random_state=42
-        )
-
-        # Lưu vào session_state
-        st.session_state.X_train = X_train
-        st.session_state.X_test = X_test
-        st.session_state.y_train = y_train
-        st.session_state.y_test = y_test
-        st.session_state.y = y
-        st.session_state.X_val = X_val
-        st.session_state.X_train_shape = X_train.shape[0]
-        st.session_state.X_val_shape = X_val.shape[0]
-        st.session_state.X_test_shape = X_test.shape[0]
+    # Lưu vào session_state
+    st.session_state.X_train = X_train
+    st.session_state.X_test = X_test
+    st.session_state.y_train = y_train
+    st.session_state.y_test = y_test
+    st.session_state.y = y
+    st.session_state.X_val = X_val
+    st.session_state.X_train_shape = X_train.shape[0]
+    st.session_state.X_val_shape = X_val.shape[0]
+    st.session_state.X_test_shape = X_test.shape[0]
 
     # Chia tập Train - Validation bằng Cross Validation (KFold)
     k = st.slider("Chọn số k trong Cross Validation", 2, 10, 5)
