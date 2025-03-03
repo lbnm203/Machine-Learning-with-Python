@@ -3,10 +3,14 @@ from mlflow.tracking import MlflowClient
 import streamlit as st
 import os
 
-# mlflow_tracking_uri = st.secrets["MLFLOW_TRACKING_URI"]
-MLFLOW_TRACKING_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
-mlflow_username = st.secrets["MLFLOW_TRACKING_USERNAME"]
-mlflow_password = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+# MLFLOW_TRACKING_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
+if "MLFLOW_TRACKING_URI" in st.secrets and "MLFLOW_TRACKING_USERNAME" in st.secrets and "MLFLOW_TRACKING_PASSWORD" in st.secrets:
+    mlflow_tracking_uri = st.secrets["MLFLOW_TRACKING_URI"]
+    mlflow_username = st.secrets["MLFLOW_TRACKING_USERNAME"]
+    mlflow_password = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
+    mlflow.set_tracking_username(mlflow_username)
+    mlflow.set_tracking_password(st.secrets[mlflow_password])
 
 # Thiết lập biến môi trường
 # os.environ["MLFLOW_TRACKING_URI"] = mlflow_tracking_uri
