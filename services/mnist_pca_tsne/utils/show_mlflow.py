@@ -4,22 +4,28 @@ import streamlit as st
 import os
 
 # MLFLOW_TRACKING_URI = "https://dagshub.com/lbnm203/Machine_Learning_UI.mlflow"
+# Kiểm tra và lấy thông tin từ st.secrets
 if "MLFLOW_TRACKING_URI" in st.secrets and "MLFLOW_TRACKING_USERNAME" in st.secrets and "MLFLOW_TRACKING_PASSWORD" in st.secrets:
     mlflow_tracking_uri = st.secrets["MLFLOW_TRACKING_URI"]
     mlflow_username = st.secrets["MLFLOW_TRACKING_USERNAME"]
     mlflow_password = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+
+    # Thiết lập MLFlow Tracking URI
     mlflow.set_tracking_uri(mlflow_tracking_uri)
-    mlflow.set_tracking_username(mlflow_username)
-    mlflow.set_tracking_password(st.secrets[mlflow_password])
 
-# Thiết lập biến môi trường
-# os.environ["MLFLOW_TRACKING_URI"] = mlflow_tracking_uri
-st.session_state["mlflow_url"] = MLFLOW_TRACKING_URI
-os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
-os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
+    # Thiết lập biến môi trường cho xác thực (nếu server MLFlow yêu cầu)
+    os.environ["MLFLOW_TRACKING_USERNAME"] = mlflow_username
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 
-# Thiết lập MLflow (Đặt sau khi mlflow_tracking_uri đã có giá trị)
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    # Lưu thông tin vào session_state (nếu cần)
+    st.session_state["mlflow_url"] = mlflow_tracking_uri  # Sử dụng biến đã được định nghĩa
+
+    st.write("Đã cấu hình MLFlow với thông tin xác thực từ st.secrets.")
+else:
+    # Nếu không có thông tin xác thực, sử dụng URI mặc định (local hoặc không xác thực)
+    # default_uri = "http://localhost:5000"  # Hoặc URI khác phù hợp
+    # mlflow.set_tracking_uri(default_uri)
+    st.warning("Không tìm thấy thông tin xác thực MLFlow trong st.secrets. Sử dụng URI mặc định không xác thực.")
 
 
 def show_experiment_selector():
