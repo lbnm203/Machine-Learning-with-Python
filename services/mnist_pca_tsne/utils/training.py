@@ -11,14 +11,27 @@ import time
 
 
 def input_mlflow():
-    mlflow.set_tracking_uri(st.secrets["MLFLOW_TRACKING_URL"])
-    st.session_state['mlflow_url'] = st.secrets["MLFLOW_TRACKING_URL"]
+    try:
+        # Kiểm tra xem Streamlit có secrets không
+        if "MLFLOW_TRACKING_URL" not in st.secrets:
+            st.error(
+                "❌ Không tìm thấy `MLFLOW_TRACKING_URL` trong secrets. Hãy kiểm tra Streamlit Cloud settings.")
+            return
 
-    os.environ["MLFLOW_TRACKING_URI"] = st.secrets["MLFLOW_TRACKING_URL"]
-    os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["MLFLOW_TRACKING_USERNAME"]
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+        # Cập nhật MLflow Tracking URI từ secrets
+        mlflow.set_tracking_uri(st.secrets["MLFLOW_TRACKING_URL"])
+        st.session_state['mlflow_url'] = st.secrets["MLFLOW_TRACKING_URL"]
 
-    mlflow.set_experiment("MNIST_PCA_t-SNE")
+        # Cập nhật biến môi trường (nếu cần)
+        os.environ["MLFLOW_TRACKING_URI"] = st.secrets["MLFLOW_TRACKING_URL"]
+        os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["MLFLOW_TRACKING_USERNAME"]
+        os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+
+        mlflow.set_experiment("MNIST_PCA_t-SNE")
+        st.success("✅ Đã kết nối thành công với MLflow!")
+
+    except Exception as e:
+        st.error(f"🚨 Lỗi khi kết nối MLflow: {e}")
 
 
 @st.cache_data
