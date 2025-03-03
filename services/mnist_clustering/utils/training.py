@@ -60,7 +60,7 @@ def train_process(X, y):
 
     # Chọn số lượng ảnh để train
     num_samples = st.number_input(
-        'Chọn số lượng ảnh cho phần huấn luyện', 100, total_samples, 20000)
+        'Chọn số lượng ảnh cho phần huấn luyện', 1000, total_samples, 70000)
 
     # Chọn số lượng ảnh theo yêu cầu
     X_selected, y_selected = X[:num_samples], y[:num_samples]
