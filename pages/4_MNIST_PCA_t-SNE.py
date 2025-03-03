@@ -1,9 +1,9 @@
 import streamlit as st
 
 from services.mnist_pca_tsne.utils.data_mnist import mnist_dataset
-# from services.mnist_clustering.utils.training import train_process
+from services.mnist_pca_tsne.utils.training import train_pca
 from services.mnist_pca_tsne.utils.theory import introduce_pca, introduce_tsne
-# from services.mnist_clustering.utils.show_mlflow import show_experiment_selector
+from services.mnist_pca_tsne.utils.show_mlflow import show_experiment_selector
 # Streamlit UI
 
 
@@ -31,13 +31,13 @@ def main():
 
     # --------------- Training ---------------
     with train:
-        pass
+        train_pca(X, y)
         # train_process(X, y)
 
     # --------------- DEMO MNIST ---------------
     with mlflow_p:
-        pass
-        # show_experiment_selector()
+        # pass
+        show_experiment_selector()
 
 
 if __name__ == "__main__":

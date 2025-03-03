@@ -18,18 +18,8 @@ def mlflow_input():
 
     mlflow.set_experiment("MNIST_Clustering")
 
-# Hàm giảm chiều dữ liệu bằng PCA
-
-
-# def reduce_dimension(X, n_components):
-#     """Giảm chiều dữ liệu xuống n_components chiều bằng PCA."""
-#     pca = PCA(n_components=n_components)
-#     X_reduced = pca.fit_transform(X)
-#     return X_reduced
 
 # Hàm huấn luyện Kmeans
-
-
 def train_kmeans(X, n_clusters, init, max_iter):
     """Huấn luyện mô hình Kmeans với số cụm n_clusters."""
     kmeans = KMeans(n_clusters=n_clusters, init=init, max_iter=max_iter, random_state=42)
@@ -111,19 +101,6 @@ def train_process(X, y):
         mlflow.log_param("X_train_shape", X_train.shape)
         mlflow.log_param("X_test_shape", X_test.shape)
 
-        # # Chọn có dùng PCA không
-        # use_pca = st.checkbox("Sử dụng PCA để giảm chiều dữ liệu", value=True)
-        # if use_pca:
-        #     n_components = st.slider("Số chiều sau PCA",
-        #                             2, 100, 50,
-        #                             help="""PCA (Principal Component Analysis) là một kỹ thuật giảm chiều dữ liệu trong học máy và thống kê, 
-        #                             giúp biến đổi dữ liệu từ không gian nhiều chiều sang không gian ít chiều hơn mà vẫn giữ lại được phần lớn 
-        #                             thông tin quan trọng. PCA có thể loại bỏ nhiễu và các biến dư thừa, giúp cải thiện hiệu suất của các mô hình học máy.""")
-        #     X_train_reduced = reduce_dimension(X_train, n_components)
-        #     mlflow.log_param("PCA_components", n_components)
-        # else:
-        #     X_train_reduced = X_train
-
         st.write("---")
 
         col1, col2 = st.columns(2)
@@ -170,12 +147,6 @@ def train_process(X, y):
                             "Không thể tính Silhouette Score (chỉ có 1 cụm)")
 
                     with col2:
-                        # # Giảm chiều xuống 2D để vẽ
-                        # if use_pca and n_components != 2:
-                        #     X_train_2d = reduce_dimension(X_train, 2)
-                        # else:
-                        #     X_train_2d = X_train_reduced
-
                         # Vẽ biểu đồ
                         st.header("Kết quả phân cụm KMeans")
                         fig, ax = plt.subplots(figsize=(12, 12))
