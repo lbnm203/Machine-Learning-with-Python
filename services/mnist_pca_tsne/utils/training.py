@@ -168,13 +168,6 @@ Thuật toán SVD được sử dụng để tính toán PCA:
             with col1:
                 fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
-                # # Biểu đồ cột cho explained_variance_
-                # ax.bar(range(1, len(pca.explained_variance_) + 1),
-                #         pca.explained_variance_)
-                # ax.set_title("Phương sai giải thích")
-                # ax.set_xlabel("Thành phần chính")
-                # ax.set_ylabel("Phương sai")
-
                 # Biểu đồ cột cho explained_variance_ratio_
                 ax.bar(
                     range(1, len(pca.explained_variance_ratio_) + 1), pca.explained_variance_ratio_)

@@ -4,10 +4,12 @@ from sklearn.preprocessing import StandardScaler
 import streamlit as st
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, adjusted_rand_score
 import matplotlib.pyplot as plt
 import os
 import mlflow
+import time
+import datetime
 
 
 def mlflow_input():
@@ -20,60 +22,135 @@ def mlflow_input():
     mlflow.set_experiment("MNIST_Clustering")
 
 
-# Hàm vẽ biểu đồ scatter plot 2D
-def plot_clusters(X_2d, dbscan_labels, kmeans_labels):
-    """Vẽ biểu đồ scatter plot 2D cho kết quả phân cụm của DBSCAN và Kmeans."""
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-
-    # Biểu đồ DBSCAN
-    ax[0].scatter(X_2d[:, 0], X_2d[:, 1], c=dbscan_labels, cmap='viridis', s=5)
-    ax[0].set_title("Phân cụm DBSCAN")
-
-    # Biểu đồ Kmeans
-    ax[1].scatter(X_2d[:, 0], X_2d[:, 1], c=kmeans_labels, cmap='viridis', s=5)
-    ax[1].set_title("Phân cụm Kmeans")
-
-    return fig
-
-
 @st.cache_resource
-def train_kmeans(X, n_clusters, max_iter):
+def train_kmeans(X, n_clusters):
     # Đảm bảo X là 2D
-    if len(X.shape) > 2:
-        X = X.reshape(-1, X.shape[1] * X.shape[2])
-    kmeans = KMeans(n_clusters=n_clusters, max_iter=max_iter, random_state=42)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(X)
     return kmeans, labels
 
 
-def plot_cluster_kmeans(X, n_clusters):
-    fig, ax = plt.subplots(figsize=(6, 6))
-    labels = st.session_state["labels"]
-    centroids = st.session_state["centroids"]
+@st.cache_resource
+def train_dbscan(X, eps, min_samples):
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+    labels = dbscan.fit_predict(X)
+    return dbscan, labels
 
-    # Đảm bảo X là 2D trước khi vẽ
-    if len(X.shape) > 2:
-        X = X.reshape(-1, X.shape[1] * X.shape[2])
 
-    # Lấy mẫu ngẫu nhiên 1000 điểm để vẽ
-    if X.shape[0] > 1000:
-        idx = np.random.choice(X.shape[0], 1000, replace=False)
-        X_sample = X[idx]
-        labels_sample = labels[idx]
-    else:
-        X_sample = X
-        labels_sample = labels
-
-    # Vẽ từng cụm (dùng 2 chiều đầu tiên)
-    for i in range(n_clusters):
-        ax.scatter(X_sample[labels_sample == i][:, 0], X_sample[labels_sample == i][:, 1],
-                   label=f"Cụm {i}", alpha=0.6, edgecolors="k")
-
-    ax.scatter(centroids[:, 0], centroids[:, 1], s=200,
-               c="red", marker="X", label="Tâm cụm")
-    ax.set_title(f"K-Means Clustering")
-    ax.legend()
+def plot_clusters(X, labels, method, params, run):
+    # Vì không dùng PCA, ta sẽ vẽ một biểu đồ đơn giản hơn, ví dụ: histogram
+    fig, ax = plt.subplots(figsize=(10, 6))
+    unique_labels = np.unique(labels)
+    ax.hist(labels, bins=len(unique_labels), edgecolor='black')
+    ax.set_title(f"{method} Cluster Distribution")
+    ax.set_xlabel("Cluster Label")
+    ax.set_ylabel("Number of Samples")
     st.pyplot(fig)
+
+    plot_file = f"{method.lower()}_distribution.png"
+    fig.savefig(plot_file)
+    if run:
+        mlflow.log_artifact(plot_file, artifact_path="visualizations")
+    plt.close(fig)
+
+
+def visualize_dbscan(X, labels, images):
+    unique_labels = np.unique(labels)
+    # Đếm số cụm, không tính noise
+    n_clusters = len(unique_labels) - (1 if -1 in unique_labels else 0)
+    n_noise = np.sum(labels == -1)
+
+    # 1. Hiển thị lưới hình ảnh đại diện
+    n_samples_per_cluster = 5
+    fig, axes = plt.subplots(len(unique_labels), n_samples_per_cluster,
+                             figsize=(n_samples_per_cluster*2, len(unique_labels)*2))
+    for i, cluster in enumerate(unique_labels):
+        cluster_indices = np.where(labels == cluster)[0]
+        samples = np.random.choice(cluster_indices, min(
+            n_samples_per_cluster, len(cluster_indices)), replace=False)
+        for j, sample_idx in enumerate(samples):
+            if len(unique_labels) == 1:
+                ax = axes[j] if n_samples_per_cluster > 1 else axes
+            else:
+                ax = axes[i, j]
+            ax.imshow(images[sample_idx], cmap='gray')
+            ax.axis('off')
+            if j == 0:
+                ax.set_title(
+                    f'{"Noise" if cluster == -1 else f"Cụm {cluster}"}')
+    plt.suptitle(
+        f"Kết quả DBSCAN: {n_clusters} cụm, {n_noise} điểm noise", y=1.05)
+    plt.tight_layout()
+
+    # 2. Biểu đồ cột số lượng mẫu
+    cluster_counts = pd.Series(labels).value_counts().sort_index()
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    cluster_counts.plot(kind='bar', ax=ax2)
+    ax2.set_title("Số lượng mẫu trong mỗi cụm (bao gồm noise)")
+    ax2.set_xlabel("Nhãn cụm (-1 là noise)")
+    ax2.set_ylabel("Số lượng mẫu")
+    plt.tight_layout()
+
+    return fig, fig2
+
+
+def compare_clusters_with_true_labels(X, y_true, labels_pred, method, n_samples_per_cluster=5):
+    """
+    So sánh nhãn cụm dự đoán với nhãn thật và hiển thị ảnh mẫu.
+    X: Dữ liệu gốc (chưa reshape)
+    y_true: Nhãn thật
+    labels_pred: Nhãn cụm dự đoán
+    method: Tên mô hình (KMeans hoặc DBSCAN)
+    n_samples_per_cluster: Số ảnh mẫu hiển thị cho mỗi cụm
+    """
+    # Hiển thị ảnh mẫu từ mỗi cụm (bao gồm nhiễu nếu có)
+    unique_labels = np.unique(labels_pred)
+    st.write(f"### Hiển thị {n_samples_per_cluster} ảnh mẫu từ mỗi cụm/nhiễu")
+
+    for cluster in unique_labels:
+        if cluster == -1 and method == "DBSCAN":
+            st.write(f"#### Nhiễu (Cluster -1)")
+        else:
+            st.write(f"#### Cụm {cluster}")
+
+        # Lấy chỉ số của các mẫu trong cụm này
+        cluster_indices = np.where(labels_pred == cluster)[0]
+        if len(cluster_indices) == 0:
+            st.write("Không có mẫu nào trong cụm này.")
+            continue
+
+        # Chọn ngẫu nhiên tối đa n_samples_per_cluster mẫu
+        sample_indices = np.random.choice(cluster_indices,
+                                          min(n_samples_per_cluster,
+                                              len(cluster_indices)),
+                                          replace=False)
+
+        # Tạo figure để hiển thị ảnh
+        fig_kmeans, axes = plt.subplots(
+            1, len(sample_indices), figsize=(2 * len(sample_indices), 2))
+        if len(sample_indices) == 1:
+            axes = [axes]  # Đảm bảo axes là iterable
+
+        for idx, ax in zip(sample_indices, axes):
+            # Giả sử X là ảnh MNIST (28x28), cần reshape lại từ flatten nếu cần
+            img = X[idx].reshape(28, 28) if X[idx].size == 784 else X[idx]
+            ax.imshow(img, cmap='gray')
+            ax.axis('off')
+
+            # Save the figure to a file only if within an active MLflow run
+            if mlflow.active_run():
+                plot_file = f"{method.lower()}_cluster_samples.png"
+                fig_kmeans.savefig(plot_file)
+                mlflow.log_artifact(plot_file, artifact_path="visualizations")
+
+                # Lưu vào session_state
+                if "cluster_fig" not in st.session_state:
+                    st.session_state["cluster_fig"] = {}
+
+                st.session_state["cluster_fig"]["KMeans"] = fig_kmeans
+
+        st.pyplot(fig_kmeans)
+        plt.close(fig_kmeans)
 
 
 def train_process(X, y):
@@ -81,21 +158,21 @@ def train_process(X, y):
 
     total_samples = X.shape[0]
 
-    # Chọn số lượng ảnh để train
     num_samples = st.slider(
-        'Chọn số lượng ảnh cho phần huấn luyện', 1000, total_samples, 70000)
+        'Chọn số lượng ảnh cho phần huấn luyện', 1000, total_samples, 10000)
     X_selected, y_selected = X[:num_samples], y[:num_samples]
 
-    # Chọn tỷ lệ train/test
     test_size = st.slider('Test size', 0.0, 1.0, 0.3)
 
     if st.button("Chia Dữ Liệu"):
         with st.spinner("Đang tải và chia dữ liệu..."):
+            start_time = time.time()
             X_train, X_test, y_train, y_test = train_test_split(
                 X_selected, y_selected, test_size=test_size, random_state=42)
-            st.success("👉 Chia Dữ Liệu Thành Công!")
+            training_time = time.time() - start_time
 
-            # Hiển thị số lượng mẫu
+            st.success(f"👉 Chia Dữ Liệu Thành Công! - {training_time:.2f}s")
+
             st.write("### Số lượng mẫu")
             data = {
                 "Tập": ["Train", "Test"],
@@ -104,171 +181,127 @@ def train_process(X, y):
             }
             st.table(data)
 
-            # Lưu vào session state
-            # st.session_state['X_train'] = X_train
-            # st.session_state['X_test'] = X_test
-            # Chuẩn hóa dữ liệu
             st.session_state['X_train'] = X_train
             st.session_state['X_test'] = X_test
             st.session_state['y_train'] = y_train
             st.session_state['y_test'] = y_test
 
-            # Chuẩn hóa dữ liệu
-            st.session_state['X_train'] = X_train.reshape(-1, 28 * 28) / 255.0
-            st.session_state['X_test'] = X_test.reshape(-1, 28 * 28) / 255.0
+    if "X_train" not in st.session_state:
+        st.warning("⚠️ Vui lòng chia dữ liệu trước khi train!")
+        return
 
     X_train = st.session_state["X_train"]
     y_train = st.session_state["y_train"]
 
-    st.write('---')
-    model_type = st.selectbox('Chọn Thuật Toán Phân Cụm', ('KMeans', 'DBSCAN'))
-    st.write('---')
+    # Chuẩn hóa dữ liệu
+    X_train_norm = (X_train.reshape(-1, 28 * 28) / 255.0).astype(np.float32)
+    st.session_state["X_train_norm"] = X_train_norm
 
-    col1, col2 = st.columns(2)
-    if model_type == "KMeans":
-        with col1:
-            n_clusters = st.slider("Số cụm (K)", 1, 10,
-                                   10, help="Số lượng tâm cần tạo ra")
-            max_iter = st.slider("Max iterations", 100, 1000, 100,
-                                 help="Số lần lặp tối đa của thuật toán k-means cho một lần chạy duy nhất")
+    model_choice = st.selectbox("Chọn mô hình:", ["KMeans", "DBSCAN"])
 
-            if st.button("Huấn luyện KMeans"):
-                if "X_train" not in st.session_state:
-                    st.warning("⚠️ Vui lòng chia dữ liệu trước khi train!")
-                    return
-                kmeans, kmeans_labels = train_kmeans(
-                    X_train, n_clusters, max_iter)
-                st.session_state["labels"] = kmeans_labels
-                st.session_state["centroids"] = kmeans.cluster_centers_
-                st.success("Huấn luyện KMeans thành công!")
+    mlflow_input()
+    run_name = st.text_input("Enter Run Name:", "")
+    if run_name.strip() == "" or run_name.strip() == " ":
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        run_name = f"MNIST_Clustering_{timestamp.replace(' ', '_').replace(':', '-')}"
 
-                # Logging MLflow
-                with mlflow.start_run(run_name="KMeans_Training"):
-                    mlflow.log_param("Clustering_Algorithm", "KMeans")
+    st.session_state["run_name"] = run_name
+
+    if model_choice == "KMeans":
+        n_clusters = st.slider("🔢 Chọn số cụm (K):", 2, 20, 10)
+        # n_init = st.slider("🔄 Số lần khởi tạo:", 1, 20, 10)
+
+        if st.button("Train KMeans"):
+            with mlflow.start_run(run_name=run_name):
+                with st.spinner("Đang huấn luyện KMeans..."):
+                    start_time = time.time()
+                    model, labels = train_kmeans(
+                        X_train_norm, n_clusters)
+                    training_time = time.time() - start_time
+
+                    # Tính silhouette score
+                    silhouette = silhouette_score(X_train_norm, labels)
+
+                    # Log parameters và metrics vào MLflow
+                    mlflow.log_param("model", "KMeans")
+                    mlflow.log_param("Training Size", X_train.shape[0])
                     mlflow.log_param("n_clusters", n_clusters)
-                    mlflow.log_param("max_iter", max_iter)
-                    if len(np.unique(kmeans_labels)) > 1:
-                        silhouette_kmeans = silhouette_score(
-                            X_train, kmeans_labels)
-                        mlflow.log_metric(
-                            "Silhouette_Score_KMeans", silhouette_kmeans)
-                        st.success(
-                            f"Silhouette Score: {silhouette_kmeans:.4f}")
-                    else:
-                        st.warning(
-                            "Không thể tính Silhouette Score (chỉ có 1 cụm)")
+                    mlflow.log_metric("silhouette_score", silhouette)
+                    mlflow.log_metric("training_time", training_time)
 
-        with col2:
-            if "labels" in st.session_state:
-                plot_cluster_kmeans(X_train, n_clusters)
-            else:
-                st.info("Chưa có dữ liệu cụm để vẽ. Vui lòng huấn luyện trước.")
+                    col1, col2, col3 = st.columns([1, 3, 1])
+                    # Vẽ phân bố cụm
+                    with col2:
+                        plot_clusters(X_train_norm, labels, "KMeans",
+                                      {"n_clusters": n_clusters}, True)
+                    compare_clusters_with_true_labels(
+                        X_train, y_train, labels, "KMeans")
 
+                    st.success(
+                        f"✅ Huấn luyện KMeans hoàn tất! Thời gian: {training_time:.2f}s")
+                    st.success(f"Silhouette Score: {silhouette:.4f}")
 
-#     elif model_type == "DBSCAN":
-#         st.markdown("""
-#         - **Epsilon (ε)**: giúp xác định các điểm nằm trong vùng lân cận epsilon.""",
-#         help="""
-# - **Epsilon (ε)** thấp có thể dẫn đến:
-# - vùng lân cận của mỗi điểm rất nhỏ, dẫn đến ít điểm được coi là lân cận của nhau
-# - Nhiều điểm có thể bị coi là nhiễu (noise) vì không đủ điểm trong vùng lân cận
-# - Các cụm có thể bị chia nhỏ thành nhiều cụm nhỏ hoặc thậm chí không hình thành cụm nào.
+            model_name = model_choice.lower().replace(" ", "_")
+            count = 1
+            new_model_name = model_name
+            while any(m["name"] == new_model_name for m in st.session_state["models"]):
+                new_model_name = f"{model_name}_{count}"
+                count += 1
 
-# → Số lượng cụm tăng lên, nhiều điểm bị gán nhãn là nhiễu.
-# - **Epsilon (ε)** cao có thể dẫn đến:
-# - Vùng lân cận của mỗi điểm rất lớn, dẫn đến nhiều điểm được coi là lân cận của nhau
-# - Các cụm có thể bị hợp nhất thành một cụm lớn, ngay cả khi chúng không thực sự thuộc cùng một cụm.
+            st.session_state["models"].append(
+                {"name": new_model_name, "model": model})
+            st.write(f"🔹 **Mô hình đã được lưu với tên:** `{new_model_name}`")
 
-# → Số lượng cụm giảm xuống, có thể chỉ còn một cụm duy nhất, ít điểm bị gán nhãn là nhiễu.""")
+    elif model_choice == "DBSCAN":
+        eps = st.slider("Bán kính lân cận (epsilon):", 0.1, 10.0, 0.5)
+        min_samples = st.slider("Số điểm tối thiểu trong cụm:", 2, 20, 5)
 
-#         st.markdown("""
-#         - **Min_samples**: Số lượng điểm tối thiểu trong vùng lân cận ε để một điểm được coi là điểm lõi (core point).""",
-#         help="""
-# - **Min_samples** thấp có thể dẫn đến:
-# - Rất dễ để một điểm trở thành điểm lõi, ngay cả khi nó nằm trong vùng có mật độ thấp.
-# - Các cụm có thể chứa nhiều điểm nhiễu hoặc không đồng nhất.
-# → Số lượng cụm tăng lên, các cụm có thể không chính xác và chứa nhiều nhiễu.
-# - **Min_samples** cao có thể dẫn đến:
-# - Khó để một điểm trở thành điểm lõi, vì cần nhiều điểm trong vùng lân cận.
-# - Các cụm có thể bị bỏ sót, đặc biệt là các cụm nhỏ hoặc có mật độ thấp.
-# → Số lượng cụm giảm xuống, nhiều điểm bị gán nhãn là nhiễu, ngay cả khi chúng thuộc về một cụm thực sự.
-# """)
-#         st.markdown("""
-#         - **metric**: Hàm khoảng cách để đo lường khoảng cách giữa hai điểm bất kì""",
-#         help="""mặc định là euclidean""")
+        if st.button("Train DBSCAN"):
+            with mlflow.start_run(run_name=run_name):
+                with st.spinner("Đang huấn luyện DBSCAN..."):
+                    start_time = time.time()
+                    model, labels = train_dbscan(
+                        X_train_norm, eps, min_samples)
+                    training_time = time.time() - start_time
 
-#         st.markdown("""
-#         - **algorithm**: phương pháp được sử dụng để xác định các điểm láng giềng""",
-#         help="""Bao gồm các phương pháp auto, ball_tree, kd_tree, brute:
-# - `auto`: DBSCAN tự động chọn thuật toán tối ưu dựa trên đặc điểm của dữ liệu (ví dụ: số chiều, số lượng điểm dữ liệu).
-# Nó sẽ ưu tiên sử dụng kd_tree hoặc ball_tree nếu dữ liệu phù hợp, ngược lại sẽ sử dụng brute.
-# - `ball_tree`: Sử dụng cấu trúc dữ liệu Ball Tree để tổ chức các điểm dữ liệu trong không gian.
-# Ball Tree chia không gian thành các hình cầu (balls) lồng nhau, giúp tìm kiếm lân cận hiệu quả hơn trong không gian nhiều chiều.
-# Sử dụng khi dữ liệu có số chiều cao (high-dimensional data) và kd_tree không hiệu quả.
-# - `kd_tree`: Sử dụng cấu trúc dữ liệu KD-Tree (K-dimensional Tree) để tổ chức các điểm dữ liệu.
-# KD-Tree chia không gian thành các vùng hình chữ nhật dựa trên các trục tọa độ. Sử dụng khi dữ liệu có số chiều thấp đến trung bình
-# (thường dưới 20 chiều).
-# - `brute`: Sử dụng phương pháp vét cạn (brute-force) để tính toán khoảng cách giữa tất cả các cặp điểm.
-# Không sử dụng bất kỳ cấu trúc dữ liệu nào để tối ưu hóa tìm kiếm. Sử dụng khi dữ liệu có số chiều rất cao hoặc khi các thuật toán khác không hiệu quả.
-# """)
+                    # Đếm số cụm (loại bỏ nhiễu -1)
+                    n_clusters = len(set(labels) - {-1})
+                    silhouette = silhouette_score(
+                        X_train_norm, labels) if n_clusters > 1 else -1
+                    ari = adjusted_rand_score(y_train, labels)
+                    noise_ratio = np.sum(labels == -1) / len(labels)
+                    # Log parameters và metrics
+                    mlflow.log_param("Model", "DBSCAN")
+                    mlflow.log_param("eps", eps)
+                    mlflow.log_param("min_samples", min_samples)
+                    mlflow.log_metric("n_clusters", n_clusters)
+                    mlflow.log_metric("Silhouette_score", silhouette)
+                    mlflow.log_metric("noise_ratio", noise_ratio)
+                    mlflow.log_metric("Training_time", training_time)
 
-#         eps = st.slider("Epsilon", 0.1, 5.0, 1.0)
-#         min_samples = st.slider("Min Samples", 2, 20, 5)
-#         metric = st.selectbox("Metric", ["euclidean", "manhattan"])
-#         algorithm = st.selectbox("Algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
-#         dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric=metric, algorithm=algorithm)
+                    col1, col2, col3 = st.columns([1, 3, 1])
+                    # Vẽ phân bố cụm
+                    with col2:
+                        # Vẽ phân bố cụm
+                        visualize_dbscan()
+                    #     plot_clusters(X_train_norm, labels, "DBSCAN",
+                    #                   {"eps": eps, "min_samples": min_samples}, True)
+                    # compare_clusters_with_true_labels(
+                    #     X_train, y_train, labels, "DBSCAN")
 
-#         if st.button("Huấn luyện DBSCAN"):
-#             dbscan_labels = dbscan.fit_predict(X)
-#             st.session_state["dbscan_labels"] = dbscan_labels
-#             st.success("Huấn luyện DBSCAN thành công!")
+                    st.success(
+                        f"✅ Huấn luyện DBSCAN hoàn tất! Thời gian: {training_time:.2f}s")
+                    st.success(f"Số cụm tìm được: {n_clusters}")
+                    st.success(f"Tỷ lệ nhiễu: {noise_ratio}")
+                    st.success(f"Silhouette Score: {silhouette:.4f}")
 
-#             # Logging MLflow
-#             mlflow.log_param("Clustering_Algorithm", "DBSCAN")
-#             mlflow.log_param("eps", eps)
-#             mlflow.log_param("min_samples", min_samples)
-#             mlflow.log_param("metric", metric)
-#             mlflow.log_param("algorithm", algorithm)
+            model_name = model_choice.lower().replace(" ", "_")
+            count = 1
+            new_model_name = model_name
+            while any(m["name"] == new_model_name for m in st.session_state["models"]):
+                new_model_name = f"{model_name}_{count}"
+                count += 1
 
-#             st.markdown("Silhouette Score", help="""
-# - Silhouette Score là một chỉ số đánh giá chất lượng của các cụm (clusters) trong phân cụm dữ liệu.
-# Nó đo lường mức độ tương đồng của một điểm dữ liệu với các điểm trong cùng cụm so với các điểm trong
-# các cụm khác. Giá trị Silhouette Score nằm trong khoảng từ -1 đến 1, trong đó:
-# - Giá trị càng gần 1: Các cụm càng tốt, điểm dữ liệu được gán đúng cụm.
-# - Giá trị gần 0: Điểm dữ liệu nằm gần ranh giới giữa hai cụm.
-# - Giá trị âm: Điểm dữ liệu có thể bị gán sai cụm.
-# """)
-#             # Đánh giá DBSCAN
-#             if len(np.unique(dbscan_labels)) > 1:
-#                 mask = dbscan_labels != -1
-#                 X_no_noise = X_train[mask]
-#                 labels_no_noise = dbscan_labels[mask]
-#                 if len(np.unique(labels_no_noise)) > 1:
-#                     silhouette_dbscan = silhouette_score(
-#                         X_no_noise, labels_no_noise)
-#                     mlflow.log_metric("Silhouette_Score_DBSCAN", silhouette_dbscan)
-#                     st.success(
-#                         f"Silhouette Score (không tính nhiễu): {silhouette_dbscan:.4f}")
-#                 else:
-#                     st.warning(
-#                         "Không thể tính Silhouette Score (chỉ có 1 cụm sau khi loại nhiễu)")
-#             else:
-#                 st.warning(
-#                     "Không thể tính Silhouette Score (chỉ có 1 cụm hoặc toàn nhiễu)")
-
-#             with col2:
-#                 # # Giảm chiều xuống 2D để vẽ
-#                 # if use_pca and n_components != 2:
-#                 #     X_train_2d = reduce_dimension(X_train, 2)
-#                 # else:
-#                 #     X_train_2d = X_train_reduced
-
-#                 # Vẽ biểu đồ
-#                 st.write("#### Kết quả phân cụm DBSCAN")
-#                 fig, ax = plt.subplots(figsize=(6, 6))
-#                 ax.scatter(X_train[:, 0], X_train[:, 1],
-#                         c=dbscan_labels, cmap='viridis', s=5)
-#                 ax.set_title("Phân cụm DBSCAN")
-#                 ax.set_xticks([])
-#                 ax.set_yticks([])
-#                 st.pyplot(fig)
+            st.session_state["models"].append(
+                {"name": new_model_name, "model": model})
+            st.write(f"🔹 **Mô hình đã được lưu với tên:** `{new_model_name}`")

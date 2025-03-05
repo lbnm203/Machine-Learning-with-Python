@@ -32,10 +32,10 @@ def mnist_dataset():
     st.markdown("## 📜 Tập dữ liệu MNIST")
     st.write("---")
 
-    with open('./services/mnist_pca_tsne/data/X.pkl', 'rb') as f:
+    with open('./services/mnist_clustering/data/X.pkl', 'rb') as f:
         X = pickle.load(f)
 
-    with open('./services/mnist_pca_tsne/data/y.pkl', 'rb') as f:
+    with open('./services/mnist_clustering/data/y.pkl', 'rb') as f:
         y = pickle.load(f)
 
     col1, col2 = st.columns(2)
