@@ -35,9 +35,8 @@ def main():
         # train_process(X, y)
 
     # --------------- DEMO MNIST ---------------
-    with demo:
-        pass
-
+    # with demo:
+    #     pass
 
     # --------------- MLFLOW Tracking ---------------
     with mlflow_p:

@@ -98,6 +98,11 @@ def show_experiment_selector():
         params = selected_run.data.params
         metrics = selected_run.data.metrics
 
+        st.write("---")
+        # In ra run name
+        st.write(
+            f"### 👉 Tên Run: {selected_run.data.tags.get('mlflow.runName', selected_run_id)}")
+
         if params:
             st.write("### ⚙️ Parameters:")
             st.json(params)
