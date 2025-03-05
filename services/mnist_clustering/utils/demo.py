@@ -35,13 +35,13 @@ def demo_app():
     model = next(m["model"] for m in st.session_state["models"]
                  if m["name"] == model_option)
 
-    with st.expander("Hình ảnh phân cụm của mô hình"):
-        # Hiển thị kết quả phân cụm
-        if "cluster_fig" in st.session_state and model_option in st.session_state["cluster_fig"]:
-            st.write("---")
-            st.subheader("Kết quả phân cụm")
-            st.image(st.session_state["cluster_fig"][model_option],
-                     caption=f"Phân cụm với {model_option}")
+    # with st.expander("Hình ảnh phân cụm của mô hình"):
+    #     # Hiển thị kết quả phân cụm
+    #     if "cluster_fig" in st.session_state and model_option in st.session_state["cluster_fig"]:
+    #         st.write("---")
+    #         st.subheader("Kết quả phân cụm")
+    #         st.image(st.session_state["cluster_fig"][model_option],
+    #                  caption=f"Phân cụm với {model_option}")
 
     # 🆕 Cập nhật key cho canvas khi nhấn "Tải lại"
     if "key_value" not in st.session_state:
