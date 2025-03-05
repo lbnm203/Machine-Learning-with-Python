@@ -60,8 +60,6 @@ def train_pca(X, y):
                              value=3,
                              help="""
 Số lượng chiều (`n_components`) muốn giữ lại sau khi giảm chiều bằng PCA.
-- Giá trị nhỏ hơn (ví dụ: 2-5) phù hợp cho trực quan hóa, nhưng có thể mất thông tin.
-- Giá trị lớn hơn giữ lại nhiều thông tin hơn nhưng làm tăng độ phức tạp tính toán
 # """)
 
     if st.button("Tiến hành giảm chiều"):
@@ -112,8 +110,8 @@ Số lượng chiều (`n_components`) muốn giữ lại sau khi giảm chiều
             fig.write_image(fig_path)
             mlflow.log_artifact(fig_path)
 
-            np.save(f"logs/{method}_X_reduced.pkl", X_reduced)
-            mlflow.log_artifact(f"logs/{method}_X_reduced.pkl")
+            np.save(f"{method}_X_reduced.pkl", X_reduced)
+            mlflow.log_artifact(f"{method}_X_reduced.pkl")
 
             mlflow.end_run()
             st.success(
