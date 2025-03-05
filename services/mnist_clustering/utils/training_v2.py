@@ -138,16 +138,10 @@ def compare_clusters_with_true_labels(X, y_true, labels_pred, method, n_samples_
             ax.axis('off')
 
             # Save the figure to a file only if within an active MLflow run
-            if mlflow.active_run():
-                plot_file = f"{method.lower()}_cluster_samples.png"
-                fig_kmeans.savefig(plot_file)
-                mlflow.log_artifact(plot_file, artifact_path="visualizations")
-
-                # Lưu vào session_state
-                if "cluster_fig" not in st.session_state:
-                    st.session_state["cluster_fig"] = {}
-
-                st.session_state["cluster_fig"]["KMeans"] = fig_kmeans
+            # if mlflow.active_run():
+            plot_file = f"{method.lower()}_cluster_samples.png"
+            fig_kmeans.savefig(plot_file)
+            mlflow.log_artifact(plot_file, artifact_path="visualizations")
 
         st.pyplot(fig_kmeans)
         plt.close(fig_kmeans)
