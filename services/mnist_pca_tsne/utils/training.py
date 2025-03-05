@@ -63,7 +63,7 @@ Số lượng chiều (`n_components`) muốn giữ lại sau khi giảm chiều
 # """)
 
     if st.button("Tiến hành giảm chiều"):
-        with st.spinner("Đang xử lý..."):
+        with st.spinner("Đang tiến hành giảm chiều và hiển thị biểu đồ..."):
             mlflow.start_run(run_name=st.session_state["run_name"])
             mlflow.log_param("method", method)
             mlflow.log_param("n_components", n_components)
@@ -109,9 +109,6 @@ Số lượng chiều (`n_components`) muốn giữ lại sau khi giảm chiều
             fig_path = f"logs/{method}_{n_components}D.png"
             fig.write_image(fig_path)
             mlflow.log_artifact(fig_path)
-
-            np.save(f"{method}_X_reduced.pkl", X_reduced)
-            mlflow.log_artifact(f"{method}_X_reduced.pkl")
 
             mlflow.end_run()
             st.success(
