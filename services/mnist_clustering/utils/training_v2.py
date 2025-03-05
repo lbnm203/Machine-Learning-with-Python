@@ -10,6 +10,7 @@ import os
 import mlflow
 import time
 import datetime
+import pandas as pd
 
 
 def mlflow_input():
@@ -54,7 +55,10 @@ def plot_clusters(X, labels, method, params, run):
     plt.close(fig)
 
 
-def visualize_dbscan(X, labels, images):
+def visualize_dbscan(X, labels):
+    # Reshape X back to images (28x28)
+    images = X.reshape(-1, 28, 28)
+
     unique_labels = np.unique(labels)
     # Đếm số cụm, không tính noise
     n_clusters = len(unique_labels) - (1 if -1 in unique_labels else 0)
@@ -235,6 +239,9 @@ def train_process(X, y):
                         f"✅ Huấn luyện KMeans hoàn tất! Thời gian: {training_time:.2f}s")
                     st.success(f"Silhouette Score: {silhouette:.4f}")
 
+            if "models" not in st.session_state:
+                st.session_state["models"] = []
+
             model_name = model_choice.lower().replace(" ", "_")
             count = 1
             new_model_name = model_name
@@ -247,8 +254,8 @@ def train_process(X, y):
             st.write(f"🔹 **Mô hình đã được lưu với tên:** `{new_model_name}`")
 
     elif model_choice == "DBSCAN":
-        eps = st.slider("Bán kính lân cận (epsilon):", 0.1, 10.0, 0.5)
-        min_samples = st.slider("Số điểm tối thiểu trong cụm:", 2, 20, 5)
+        eps = st.slider("Bán kính lân cận (epsilon):", 0.1, 1.0, 0.5)
+        min_samples = st.slider("Số điểm tối thiểu trong cụm:", 2, 10, 3)
 
         if st.button("Train DBSCAN"):
             with mlflow.start_run(run_name=run_name):
@@ -261,8 +268,7 @@ def train_process(X, y):
                     # Đếm số cụm (loại bỏ nhiễu -1)
                     n_clusters = len(set(labels) - {-1})
                     silhouette = silhouette_score(
-                        X_train_norm, labels) if n_clusters > 1 else -1
-                    ari = adjusted_rand_score(y_train, labels)
+                        X_train_norm, labels, random_state=42) if n_clusters > 1 else -1
                     noise_ratio = np.sum(labels == -1) / len(labels)
                     # Log parameters và metrics
                     mlflow.log_param("Model", "DBSCAN")
@@ -273,11 +279,11 @@ def train_process(X, y):
                     mlflow.log_metric("noise_ratio", noise_ratio)
                     mlflow.log_metric("Training_time", training_time)
 
-                    col1, col2, col3 = st.columns([1, 3, 1])
-                    # Vẽ phân bố cụm
-                    with col2:
-                        # Vẽ phân bố cụm
-                        visualize_dbscan()
+                    # col1, col2, col3 = st.columns([1, 3, 1])
+                    # # Vẽ phân bố cụm
+                    # with col2:
+                    #     # Vẽ phân bố cụm
+                    #     visualize_dbscan(X, labels)
                     #     plot_clusters(X_train_norm, labels, "DBSCAN",
                     #                   {"eps": eps, "min_samples": min_samples}, True)
                     # compare_clusters_with_true_labels(
@@ -288,6 +294,9 @@ def train_process(X, y):
                     st.success(f"Số cụm tìm được: {n_clusters}")
                     st.success(f"Tỷ lệ nhiễu: {noise_ratio}")
                     st.success(f"Silhouette Score: {silhouette:.4f}")
+
+            if "models" not in st.session_state:
+                st.session_state["models"] = []
 
             model_name = model_choice.lower().replace(" ", "_")
             count = 1

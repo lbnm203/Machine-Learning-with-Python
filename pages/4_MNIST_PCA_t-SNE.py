@@ -10,8 +10,8 @@ from services.mnist_pca_tsne.utils.show_mlflow import show_experiment_selector
 def main():
     st.title(" ✨ Giảm Chiều Dữ Liệu MNIST PCA - t-SNE")
 
-    data_mnist, theory, train, mlflow_p = st.tabs(
-        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Mlflow Tracking"])
+    data_mnist, theory, train, demo, mlflow_p = st.tabs(
+        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo", "Mlflow Tracking"])
 
     # --------------- Data MNIST ---------------
     with data_mnist:
@@ -35,6 +35,11 @@ def main():
         # train_process(X, y)
 
     # --------------- DEMO MNIST ---------------
+    with demo:
+        pass
+
+
+    # --------------- MLFLOW Tracking ---------------
     with mlflow_p:
         # pass
         show_experiment_selector()
