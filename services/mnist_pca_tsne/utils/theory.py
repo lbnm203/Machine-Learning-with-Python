@@ -118,7 +118,7 @@ def introduce_tsne():
     3. **Tính ma trận tương đồng trong không gian giảm chiều**:  
        - Sử dụng phân phối t-Student để tính xác suất $q_{ij}$ giữa các điểm trong không gian mới.  
     4. **Tối ưu hóa vị trí các điểm**:  
-       - Sử dụng thuật toán **gradient descent** để giảm thiểu hàm mất mát KL divergence giữa \(p_{ij}\) và \(q_{ij}\).
+       - Sử dụng thuật toán **gradient descent** để giảm thiểu hàm mất mát KL divergence giữa $p_{ij}$ và $q_{ij}$.
     """)
 
     # Phần 4: Công thức toán học của t-SNE
@@ -127,15 +127,15 @@ def introduce_tsne():
     st.write(
         "- **Xác suất tương đồng trong không gian gốc** (dựa trên phân phối Gaussian):")
     st.latex(r"""
-    p_{j|i} = \frac{\exp(\frac{-\|x_i - x_j\|^2}{2\sigma_i^2})}{\sum_{k \neq i} \exp(\frac{-\|x_i - x_k\|^2}{2\sigma_i^2})}
+    p_{ij} = \frac{\exp(\frac{-\|x_i - x_j\|^2}{2\sigma_i^2})}{\sum_{k \neq i} \exp(\frac{-\|x_i - x_k\|^2}{2\sigma_i^2})}
     """)
     st.markdown(r"""
     Trong đó:  
     - $x_i, x_j$: Các điểm dữ liệu trong không gian gốc.  
-    - $\sigma_i$: Độ lệch chuẩn của Gaussian, thay đổi theo từng điểm và được xác định bởi perplexity.  
-    Sau đó, để đảm bảo đối xứng, ta tính:  
+    - $\sigma_i$: Độ lệch chuẩn của Gaussian  
     """)
-    st.latex(r"p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n}")
+    # st.markdown("Sau đó, để đảm bảo đối xứng, ta tính: ")
+    # st.latex(r"p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n}")
     st.write(
         "- **Xác suất tương đồng trong không gian giảm chiều** (dựa trên phân phối t-Student):")
     st.latex(r"""
