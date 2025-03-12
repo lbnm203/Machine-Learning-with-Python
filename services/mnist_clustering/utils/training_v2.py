@@ -227,17 +227,17 @@ def train_process(X, y):
                     mlflow.log_metric("silhouette_score", silhouette)
                     mlflow.log_metric("training_time", training_time)
 
-                    col1, col2, col3 = st.columns([1, 3, 1])
-                    # Vẽ phân bố cụm
-                    with col2:
-                        plot_clusters(X_train_norm, labels, "KMeans",
-                                      {"n_clusters": n_clusters}, True)
-                    compare_clusters_with_true_labels(
-                        X_train, y_train, labels, "KMeans")
+                col1, col2, col3 = st.columns([1, 3, 1])
+                # Vẽ phân bố cụm
+                with col2:
+                    plot_clusters(X_train_norm, labels, "KMeans",
+                                  {"n_clusters": n_clusters}, True)
+                compare_clusters_with_true_labels(
+                    X_train, y_train, labels, "KMeans")
 
-                    st.success(
-                        f"✅ Huấn luyện KMeans hoàn tất! Thời gian: {training_time:.2f}s")
-                    st.success(f"Silhouette Score: {silhouette:.4f}")
+                st.success(
+                    f"✅ Huấn luyện KMeans hoàn tất! Thời gian: {training_time:.2f}s")
+                st.success(f"Silhouette Score: {silhouette:.4f}")
 
             if "models" not in st.session_state:
                 st.session_state["models"] = []

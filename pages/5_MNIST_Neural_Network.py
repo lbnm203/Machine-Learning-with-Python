@@ -13,9 +13,10 @@ from sklearn.datasets import fetch_openml
 
 # from streamlit_drawable_canvas import st_canvas
 from services.mnist_neural_network.utils.data_mnist import mnist_dataset
-# from services.mnist_classfier.utils.training import train_process
-# from services.mnist_classfier.utils.demo_st import demo_app
-# from services.mnist_classfier.utils.show_mlflow import show_experiment_selector
+from services.mnist_neural_network.utils.theory import neural_network
+from services.mnist_neural_network.utils.training import train_process
+from services.mnist_neural_network.utils.demo import demo_app
+from services.mnist_neural_network.utils.show_mlflow import show_experiment_selector
 
 
 # Streamlit UI
@@ -31,23 +32,19 @@ def main():
 
     # -------- Theory Decision Tree - SVM ---------
     with theory:
-        # decision_tree_theory()
-        pass
+        neural_network()
 
     # --------------- Training ---------------
     with train:
-        pass
-        # train_process(X, y)
+        train_process(X, y)
 
     # --------------- DEMO MNIST ---------------
     with demo:
-        pass
-        # demo_app()
+        demo_app()
 
     # --------------- MLflow Tracking ---------------
     with mlflow_p:
-        pass
-        # show_experiment_selector()
+        show_experiment_selector()
 
 
 if __name__ == "__main__":

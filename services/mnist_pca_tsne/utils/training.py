@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import plotly.express as px
+import datetime
 
 
 def input_mlflow():
@@ -49,9 +50,13 @@ def train_pca(X, y):
 
     input_mlflow()
 
-    run_name = st.text_input("Nhập tên Run:", "default")
-    if not run_name:
-        run_name = "default_run"
+    run_name = st.text_input("Đặt tên Run:", "")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if run_name.strip() == "" or run_name.strip() == " ":
+        run_name = f"MNIST_Neural_Network_{timestamp.replace(' ', '_').replace(':', '-')}"
+    else:
+        run_name = f"{run_name}_{timestamp.replace(' ', '_').replace(':', '-')}"
+
     st.session_state["run_name"] = run_name
 
     method = st.selectbox("Chọn phương pháp giảm chiều", ["PCA", "t-SNE"])
