@@ -20,7 +20,7 @@ def mlflow_input():
     os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
-    mlflow.set_experiment("MNIST_Clustering")
+    mlflow.set_experiment("MNIST_Cluster")
 
 
 @st.cache_resource
@@ -32,8 +32,8 @@ def train_kmeans(X, n_clusters):
 
 
 @st.cache_resource
-def train_dbscan(X, eps, min_samples):
-    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+def train_dbscan(X, eps, min_point):
+    dbscan = DBSCAN(eps=eps, min_samples=min_point)
     labels = dbscan.fit_predict(X)
     return dbscan, labels
 
@@ -201,7 +201,7 @@ def train_process(X, y):
     run_name = st.text_input("Enter Run Name:", "")
     if run_name.strip() == "" or run_name.strip() == " ":
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        run_name = f"MNIST_Clustering_{timestamp.replace(' ', '_').replace(':', '-')}"
+        run_name = f"MNIST_Clustering_{model_choice}_{timestamp.replace(' ', '_').replace(':', '-')}"
 
     st.session_state["run_name"] = run_name
 
@@ -273,7 +273,7 @@ def train_process(X, y):
                     # Log parameters và metrics
                     mlflow.log_param("Model", "DBSCAN")
                     mlflow.log_param("eps", eps)
-                    mlflow.log_param("min_samples", min_samples)
+                    mlflow.log_param("min_point", min_samples)
                     mlflow.log_metric("n_clusters", n_clusters)
                     mlflow.log_metric("Silhouette_score", silhouette)
                     mlflow.log_metric("noise_ratio", noise_ratio)

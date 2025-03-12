@@ -11,6 +11,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 import os
 from sklearn.model_selection import cross_val_score
+import datetime
 
 
 def mlflow_input():
@@ -150,20 +151,48 @@ def train_process(X, y):
     n_folds = st.slider("Chọn số folds Cross-Validation:",
                         min_value=2, max_value=10, value=3)
 
+    run_name = st.text_input("Đặt tên Run:", "")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if run_name.strip() == "" or run_name.strip() == " ":
+        run_name = f"MNIST_Classification_{timestamp.replace(' ', '_').replace(':', '-')}"
+    else:
+        run_name = f"{run_name}_{timestamp.replace(' ', '_').replace(':', '-')}"
+
+    st.session_state["run_name"] = run_name
+
     if st.button("Huấn luyện mô hình"):
-        with mlflow.start_run(run_name=f"Train_{st.session_state['run_name']}"):
-            mlflow.log_param("test_size", st.session_state.test_size)
-            mlflow.log_param("val_size", st.session_state.val_size)
-            mlflow.log_param("train_size", st.session_state.train_size)
-            mlflow.log_param("num_samples", st.session_state.total_samples)
+        progress_bar = st.progress(0)
+        status_text = st.empty()  # để hiển thị thông báo trạng thái
 
-            cv_scores = cross_val_score(model, X_train, y_train, cv=n_folds)
-            mean_cv_score = cv_scores.mean()
-            std_cv_score = cv_scores.std()
+        with mlflow.start_run(run_name):
+            # Ghi lại các tham số
+            with st.spinner("Đang huấn luyện..."):
+                mlflow.log_param("test_size", st.session_state.test_size)
+                mlflow.log_param("val_size", st.session_state.val_size)
+                mlflow.log_param("train_size", st.session_state.train_size)
+                mlflow.log_param("num_samples", st.session_state.total_samples)
+                progress_bar.progress(20)
 
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
+                # Thực hiện cross validation
+                status_text.text("Đang chạy cross validation...")
+                cv_scores = cross_val_score(
+                    model, X_train, y_train, cv=n_folds)
+                mean_cv_score = cv_scores.mean()
+                std_cv_score = cv_scores.std()
+                progress_bar.progress(50)
+
+                # Huấn luyện mô hình
+                status_text.text("Huấn luyện mô hình...")
+                model.fit(X_train, y_train)
+                progress_bar.progress(70)
+
+                # Dự đoán và đánh giá
+                status_text.text("Dự đoán và đánh giá mô hình...")
+                y_pred = model.predict(X_test)
+                acc = accuracy_score(y_test, y_pred)
+                progress_bar.progress(100)
+
+                status_text.text("Hoàn thành huấn luyện!")
             st.success(f"Độ chính xác trên Testing: {acc:.4f}")
             st.success(
                 f"Độ chính xác trung bình khi Cross-Validation: {mean_cv_score:.4f}                                                     ")

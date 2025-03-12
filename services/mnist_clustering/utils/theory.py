@@ -34,15 +34,19 @@ def explain_kmeans():
        - Tiếp tục bước 2 và 3 cho đến khi centroid ổn định hoặc đạt số lần lặp tối đa.
     """)
 
-    st.subheader("Ví dụ minh họa")
-    st.write("""
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Ví dụ minh họa")
+        st.write("""
     Giả sử có một tập dữ liệu 2D với các điểm phân bố thành hai nhóm. KMeans sẽ phân cụm như sau:
 
-    - **Bước 1**: Chọn ngẫu nhiên 2 centroid (K=2).
+    - **Bước 1**: Chọn ngẫu nhiên 3 centroid (K=3).
     - **Bước 2**: Gán mỗi điểm vào cụm có centroid gần nhất.
     - **Bước 3**: Cập nhật centroid dựa trên trung bình của các điểm trong cụm.
     - **Bước 4**: Lặp lại đến khi centroid không thay đổi.
     """)
+    with col2:
+        st.image("./services/mnist_clustering/assest/kmean_1.png",)
 
     st.subheader("Ưu và nhược điểm của KMeans")
     st.write("""
@@ -69,8 +73,8 @@ def explain_dbscan():
     st.subheader("Các khái niệm cơ bản")
     st.write("""
     - **Epsilon (ε)**: Bán kính của vùng lân cận xung quanh một điểm.
-    - **Min_samples**: Số lượng điểm tối thiểu trong vùng lân cận ε để một điểm được coi là điểm lõi (core point).
-    - **Điểm lõi (core point)**: Điểm có ít nhất `min_samples` điểm trong vùng lân cận ε.
+    - **MinPts**: Số lượng điểm tối thiểu trong vùng lân cận ε để một điểm được coi là điểm lõi (core point).
+    - **Điểm lõi (core point)**: Điểm có ít nhất `MinPts` điểm trong vùng lân cận ε.
     - **Điểm biên (border point)**: Điểm không phải là lõi nhưng nằm trong vùng lân cận của một điểm lõi.
     - **Điểm nhiễu (noise point)**: Điểm không phải lõi và không nằm trong vùng lân cận của bất kỳ điểm lõi nào.
     """)
@@ -95,7 +99,7 @@ def explain_dbscan():
     with col1:
         st.write("""
         Giả sử bạn có một tập dữ liệu 2D với các điểm phân bố thành hai nhóm dày đặc và một số điểm rải rác:
-        - Với ε = 1.0 và min_samples = 4, DBSCAN sẽ:
+        - Với ε = 1.0 và MinPts = 4, DBSCAN sẽ:
             - Xác định các điểm lõi trong vùng dày đặc.
             - Mở rộng cụm từ các điểm lõi.
             - Gán các điểm gần cụm thành điểm biên.
@@ -114,7 +118,7 @@ def explain_dbscan():
     - Hiệu quả trong việc loại bỏ nhiễu.
 
     **Nhược điểm**:
-    - Khó chọn tham số ε và min_samples phù hợp.
+    - Khó chọn tham số ε và MinPts phù hợp.
     - Hiệu suất kém với dữ liệu cao chiều nếu không giảm chiều.
     - Không phù hợp nếu các cụm có mật độ khác nhau.
     """)

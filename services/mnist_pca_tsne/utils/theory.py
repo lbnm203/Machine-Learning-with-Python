@@ -127,15 +127,14 @@ def introduce_tsne():
     st.write(
         "- **Xác suất tương đồng trong không gian gốc** (dựa trên phân phối Gaussian):")
     st.latex(r"""
-    p_{ij} = \frac{\exp(\frac{-\|x_i - x_j\|^2}{2\sigma_i^2})}{\sum_{k \neq i} \exp(\frac{-\|x_i - x_k\|^2}{2\sigma_i^2})}
+    p_{j | i} = \frac{\exp(\frac{-\|x_i - x_j\|^2}{2\sigma_i^2})}{\sum_{k \neq i} \exp(\frac{-\|x_i - x_k\|^2}{2\sigma_i^2})}
     """)
     st.markdown(r"""
     Trong đó:  
     - $x_i, x_j$: Các điểm dữ liệu trong không gian gốc.  
     - $\sigma_i$: Độ lệch chuẩn của Gaussian  
     """)
-    # st.markdown("Sau đó, để đảm bảo đối xứng, ta tính: ")
-    # st.latex(r"p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n}")
+
     st.write(
         "- **Xác suất tương đồng trong không gian giảm chiều** (dựa trên phân phối t-Student):")
     st.latex(r"""
@@ -146,12 +145,16 @@ def introduce_tsne():
     - $y_i, y_j$: Các điểm dữ liệu trong không gian giảm chiều.  
     - Phân phối t-Student có độ tự do là 1, giúp mô phỏng tốt hơn các khoảng cách trong không gian thấp chiều.  
     """)
+
+    st.latex(r""" p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n} """)
     st.write("- **Hàm mất mát KL divergence**:")
     st.latex(r"""
     C = \sum_i \sum_j p_{ij} \log \left( \frac{p_{ij}}{q_{ij}} \right)
     """)
     st.markdown(
-        r"Mục tiêu là tối ưu hóa $C$ để $q_{ij}$ gần với $p_{ij}$ nhất có thể.")
+        r"""**C** là hàm mất mát (loss function), sử dụng KL divergence để đo sự khác biệt giữa hai phân phối $p_{ij}$ (không gian gốc)
+        và $q_{ij}$ (không gian giảm chiều). Mục tiêu của t-SNE là ối ưu hóa C bằng cách điều chỉnh vị trí các điểm $y_i$, $y_j$
+        trong không gian thấp chiều sao cho $q_{ij}$ càng giống $p_{ij}$ càng tốt.""")
 
     # Phần 5: Ứng dụng của t-SNE
     st.header("5. Ứng dụng của t-SNE")
@@ -166,7 +169,6 @@ def introduce_tsne():
     st.header("6. Lưu ý khi sử dụng t-SNE")
     st.write("""
     Khi áp dụng t-SNE, bạn cần lưu ý:  
-    - **Tham số perplexity**: Quyết định số lượng hàng xóm được xem xét, thường nằm trong khoảng 5-50 tùy kích thước dữ liệu.  
     - **Không bảo toàn khoảng cách toàn cục**: t-SNE ưu tiên cấu trúc cục bộ, nên khoảng cách giữa các cụm có thể không phản ánh đúng thực tế.  
     - **Chi phí tính toán**: Với dữ liệu lớn, t-SNE có thể chậm; hãy cân nhắc sử dụng phiên bản tối ưu như **Barnes-Hut t-SNE**.  
     - **Tính ngẫu nhiên**: Kết quả có thể thay đổi giữa các lần chạy do khởi tạo ngẫu nhiên, trừ khi cố định seed.

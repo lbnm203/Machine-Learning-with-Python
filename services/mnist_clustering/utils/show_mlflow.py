@@ -186,21 +186,22 @@ def show_experiment_selector():
     # Chỉ hiển thị log từ MNIST_Dimensionality_Reduction (huấn luyện)
     with st.spinner("Đang tải log huấn luyện..."):
         train_df, train_runs = display_logs(
-            client, "MNIST_Clustering")
+            client, "MNIST_Cluster")
         # Thêm nút làm mới cache với key duy nhất
     if st.button("🔄 Làm mới dữ liệu", key=f"refresh_data_{datetime.now().microsecond}"):
         st.cache_data.clear()
         st.rerun()
 
-    experiment = client.get_experiment_by_name("MNIST_Clustering")
+    experiment = client.get_experiment_by_name("MNIST_Cluster")
     runs = client.search_runs(experiment_ids=[experiment.experiment_id])
 
     run_names_show = [run.data.tags.get(
         "mlflow.runName", run.info.run_id) for run in runs]
     selected_run_name_show = st.selectbox(
         "Hiển thị Runs", run_names_show)
-    selected_run_id_show = next(run.info.run_id for run in runs if run.data.tags.get(
-        "mlflow.runName", run.info.run_id) == selected_run_name_show)
+    selected_run_id_show = next((run.info.run_id for run in runs if run.data.tags.get(
+        "mlflow.runName", run.info.run_id) == selected_run_name_show), None)
+
     if selected_run_name_show:
         selected_run = client.get_run(selected_run_id_show)
         st.subheader(f"📌 Thông tin Run: {selected_run_name_show}")

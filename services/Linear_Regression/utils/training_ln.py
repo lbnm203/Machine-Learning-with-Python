@@ -18,6 +18,7 @@ from sklearn.pipeline import Pipeline
 from services.Linear_Regression.utils.preprocess import preprocess_data
 import os
 from mlflow.tracking import MlflowClient
+import datetime
 
 
 def mlflow_input():
@@ -220,13 +221,22 @@ def training(data, target_col):
 
     mlflow_input()
 
-    st.session_state["run_name"] = f"{model_option}_run_default"
-    if "run_counter" not in st.session_state:
-        st.session_state["run_counter"] = 1
-    else:
-        st.session_state["run_counter"] += 1
+    # st.session_state["run_name"] = f"{model_option}_run_default"
+    # if "run_counter" not in st.session_state:
+    #     st.session_state["run_counter"] = 1
+    # else:
+    #     st.session_state["run_counter"] += 1
 
-    st.session_state["run_name"] = f"{model_option}_run_{st.session_state['run_counter']}"
+    # st.session_state["run_name"] = f"{model_option}_run_{st.session_state['run_counter']}"
+
+    run_name = st.text_input("Đặt tên Run:", "")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if run_name.strip() == "" or run_name.strip() == " ":
+        run_name = f"Linear_Regression_{timestamp.replace(' ', '_').replace(':', '-')}"
+    else:
+        run_name = f"{run_name}_{timestamp.replace(' ', '_').replace(':', '-')}"
+
+    st.session_state["run_name"] = run_name
 
     if st.button("Huấn luyện mô hình"):
         with st.spinner("Mô hình đang được huấn luyện"):
