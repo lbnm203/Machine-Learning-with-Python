@@ -109,7 +109,7 @@ def compare_clusters_with_true_labels(X, y_true, labels_pred, method, n_samples_
     """
     # Hiển thị ảnh mẫu từ mỗi cụm (bao gồm nhiễu nếu có)
     unique_labels = np.unique(labels_pred)
-    st.write(f"### Hiển thị {n_samples_per_cluster} ảnh mẫu từ mỗi cụm/nhiễu")
+    st.write(f"### Hiển thị {n_samples_per_cluster} ảnh mẫu từ mỗi cụm")
 
     for cluster in unique_labels:
         if cluster == -1 and method == "DBSCAN":
@@ -161,6 +161,9 @@ def train_process(X, y):
     X_selected, y_selected = X[:num_samples], y[:num_samples]
 
     test_size = st.slider('Test size', 0.0, 1.0, 0.3)
+    if test_size <= 0:
+        st.warning("Test size phải lớn hơn 0")
+        return
 
     if st.button("Chia Dữ Liệu"):
         with st.spinner("Đang tải và chia dữ liệu..."):
