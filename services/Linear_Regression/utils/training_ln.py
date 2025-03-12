@@ -155,12 +155,12 @@ def training(data, target_col):
     val_size = st.slider("Chọn % validation", 0, 50, 15)
     remaining_size = 100 - test_size
 
-    stratify_option = y if y.nunique() > 1 else None
+    stratify_option = y if y.value_counts().min() >= 2 else None
     X_train_full, X_test, y_train_full, y_test = train_test_split(
         X, y, test_size=test_size/100, stratify=stratify_option, random_state=42
     )
 
-    stratify_option = y_train_full if y_train_full.nunique() > 1 else None
+    stratify_option = y_train_full if y_train_full.value_counts().min() >= 2 else None
     X_train, X_val, y_train, y_val = train_test_split(
         X_train_full, y_train_full, test_size=val_size / (100 - test_size),
         stratify=stratify_option, random_state=42
