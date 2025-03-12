@@ -246,7 +246,7 @@ def show_experiment_selector():
         st.write("---")
         st.write("## Cập nhật tên Run")
         # Cập nhật tên run
-        experiment = client.get_experiment_by_name("MNIST_Neural_Network")
+        experiment = client.get_experiment_by_name("MNIST_Cluster")
         runs = client.search_runs(experiment_ids=[experiment.experiment_id])
         run_names = [run.data.tags.get(
             "mlflow.runName", run.info.run_id) for run in runs]
