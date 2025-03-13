@@ -11,4 +11,5 @@ opencv-python-headless
 plotly
 kaleido
 keras
+tensorflow
 # libgl1-mesa-glx
