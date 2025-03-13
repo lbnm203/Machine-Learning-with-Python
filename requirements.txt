@@ -10,4 +10,5 @@ dagshub
 opencv-python-headless
 plotly
 kaleido
+keras
 # libgl1-mesa-glx
