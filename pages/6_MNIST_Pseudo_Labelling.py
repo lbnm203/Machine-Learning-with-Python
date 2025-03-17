@@ -16,8 +16,10 @@ from services.mnist_nn_label.utils.show_mlflow import show_experiment_selector
 def main():
     st.title("MNIST Neural Network Labeling")
 
-    data_mnist, theory, train, demo, mlflow_p = st.tabs(
-        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo", "MLflow Tracking"])
+    data_mnist, theory, train, mlflow_p = st.tabs(
+        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "MLflow Tracking"])
+    # data_mnist, theory, train, demo, mlflow_p = st.tabs(
+    #     ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo", "MLflow Tracking"])
 
     # --------------- Data MNIST ---------------
     with data_mnist:
@@ -34,9 +36,9 @@ def main():
         # pass
 
     # --------------- DEMO MNIST ---------------
-    with demo:
-        # demo_app()
-        pass
+    # with demo:
+    #     # demo_app()
+    #     pass
 
     # --------------- MLflow Tracking ---------------
     with mlflow_p:
