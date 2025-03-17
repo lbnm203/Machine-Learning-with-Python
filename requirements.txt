@@ -12,4 +12,5 @@ plotly
 kaleido
 keras
 tensorflow
+stqdm
 # libgl1-mesa-glx
