@@ -515,14 +515,14 @@ def run(X, y):
                 mlflow.log_metric("val_accuracy", val_acc, step=iteration)
                 mlflow.log_metric(
                     f"test_accuracy_{iteration+1}", test_acc, step=iteration)
-                mlflow.log_metric(
-                    f"train_loss_{iteration+1}", train_loss, step=iteration)
-                mlflow.log_metric(
-                    f"val_loss_{iteration+1}", val_loss, step=iteration)
-                mlflow.log_metric(
-                    f"test_loss_{iteration+1}", test_loss, step=iteration)
-                mlflow.log_metric(f"labeled_samples_{iteration+1}", len(
-                    X_labeled), step=iteration)
+                # mlflow.log_metric(
+                #     f"train_loss_{iteration+1}", train_loss, step=iteration)
+                # mlflow.log_metric(
+                #     f"val_loss_{iteration+1}", val_loss, step=iteration)
+                # mlflow.log_metric(
+                #     f"test_loss_{iteration+1}", test_loss, step=iteration)
+                # mlflow.log_metric(f"labeled_samples_{iteration+1}", len(
+                #     X_labeled), step=iteration)
 
                 st.write(f"Train accuracy: {train_acc:.4f}")
                 st.write(f"Validation accuracy: {val_acc:.4f}")
@@ -581,12 +581,12 @@ def run(X, y):
                 f"Validation accuracy cuối cùng: {history['val_acc'][-1]:.4f}")
             st.write(
                 f"Test accuracy cuối cùng: {history['test_acc'][-1]:.4f}")
-            st.write(
-                f"Train loss cuối cùng: {history['train_loss'][-1]:.4f}")
-            st.write(
-                f"Validation loss cuối cùng: {history['val_loss'][-1]:.4f}")
-            st.write(
-                f"Test loss cuối cùng: {history['test_loss'][-1]:.4f}")
+            # st.write(
+            #     f"Train loss cuối cùng: {history['train_loss'][-1]:.4f}")
+            # st.write(
+            #     f"Validation loss cuối cùng: {history['val_loss'][-1]:.4f}")
+            # st.write(
+            #     f"Test loss cuối cùng: {history['test_loss'][-1]:.4f}")
             st.success(
                 f"✅ Log dữ liệu **{st.session_state['run_name']}** thành công! 🚀")
 
