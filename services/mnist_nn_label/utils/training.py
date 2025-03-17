@@ -78,14 +78,14 @@ def visualize_results(history):
     ax1.set_ylabel('Accuracy')
     ax1.legend()
 
-    # Vẽ loss
-    ax2.plot(history['train_loss'], label='Train Loss')
-    ax2.plot(history['val_loss'], label='Validation Loss')
-    ax2.plot(history['test_loss'], label='Test Loss')
-    ax2.set_title('Model Loss')
-    ax2.set_xlabel('Iteration')
-    ax2.set_ylabel('Loss')
-    ax2.legend()
+    # # Vẽ loss
+    # ax2.plot(history['train_loss'], label='Train Loss')
+    # ax2.plot(history['val_loss'], label='Validation Loss')
+    # ax2.plot(history['test_loss'], label='Test Loss')
+    # ax2.set_title('Model Loss')
+    # ax2.set_xlabel('Iteration')
+    # ax2.set_ylabel('Loss')
+    # ax2.legend()
 
     # Vẽ số lượng mẫu được gán nhãn
     ax3.plot(history['labeled_samples'], label='Labeled Samples')
@@ -508,9 +508,6 @@ def run(X, y):
                 history['train_acc'].append(train_acc)
                 history['val_acc'].append(val_acc)
                 history['test_acc'].append(test_acc)
-                history['train_loss'].append(train_loss)
-                history['val_loss'].append(val_loss)
-                history['test_loss'].append(test_loss)
 
                 # Log metrics cho mỗi iteration
                 mlflow.log_metric(f"train_accuracy_{iteration+1}",
