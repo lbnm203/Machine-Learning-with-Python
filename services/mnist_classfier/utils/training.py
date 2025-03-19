@@ -21,7 +21,7 @@ def mlflow_input():
     os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
-    mlflow.set_experiment("MNIST_Classifier")
+    mlflow.set_experiment("MNIST_Classification")
 
 
 def train_process(X, y):
