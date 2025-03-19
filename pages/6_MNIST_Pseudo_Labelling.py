@@ -7,8 +7,9 @@ import mlflow.sklearn
 # from streamlit_drawable_canvas import st_canvas
 from services.mnist_nn_label.utils.data_mnist import mnist_dataset
 from services.mnist_nn_label.utils.theory import pseudo_labeling
-from services.mnist_nn_label.utils.training import run
-# from services.mnist_neural_network.utils.demo import demo_app
+# from services.mnist_nn_label.utils.training import run
+from services.mnist_nn_label.utils.trainingv2 import train_mnist_pseudo_labeling
+from services.mnist_nn_label.utils.demo import demo_app
 from services.mnist_nn_label.utils.show_mlflow import show_experiment_selector
 
 
@@ -16,8 +17,8 @@ from services.mnist_nn_label.utils.show_mlflow import show_experiment_selector
 def main():
     st.title("MNIST Neural Network Labeling")
 
-    data_mnist, theory, train, mlflow_p = st.tabs(
-        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "MLflow Tracking"])
+    data_mnist, theory, train, demo, mlflow_p = st.tabs(
+        ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo", "MLflow Tracking"])
     # data_mnist, theory, train, demo, mlflow_p = st.tabs(
     #     ["Tập dữ liệu", "Thông tin", "Huấn Luyện", "Demo", "MLflow Tracking"])
 
@@ -32,12 +33,13 @@ def main():
 
     # --------------- Training ---------------
     with train:
-        run(X, y)
+        # run(X, y)
+        train_mnist_pseudo_labeling(X, y)
         # pass
 
     # --------------- DEMO MNIST ---------------
-    # with demo:
-    #     # demo_app()
+    with demo:
+        demo_app()
     #     pass
 
     # --------------- MLflow Tracking ---------------

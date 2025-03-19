@@ -429,6 +429,7 @@ def run(X, y):
     else:
         run_name = f"{run_name}_{timestamp.replace(' ', '_').replace(':', '-')}"
     st.session_state["run_name"] = run_name
+    
     X_labeled, y_labeled = get_initial_labeled_data(
         X_train, y_train, percentage)
     X_unlabeled = np.delete(X_train, np.where(
