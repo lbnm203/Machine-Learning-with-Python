@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.datasets import fetch_openml
 
 from streamlit_drawable_canvas import st_canvas
-from services.mnist_classfier.utils.theory import mnist_dataset, decision_tree_theory
+from services.mnist_classfier.utils.theory import mnist_dataset, decision_tree_theory, full_theory
 from services.mnist_classfier.utils.training import train_process
 from services.mnist_classfier.utils.demo_st import demo_app
 from services.mnist_classfier.utils.show_mlflow import show_experiment_selector
@@ -31,7 +31,8 @@ def main():
 
     # -------- Theory Decision Tree - SVM ---------
     with theory:
-        decision_tree_theory()
+        # decision_tree_theory()
+        full_theory()
 
     # --------------- Training ---------------
     with train:

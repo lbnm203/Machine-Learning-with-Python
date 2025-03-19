@@ -188,16 +188,21 @@ def train_process(X, y):
             if "models" not in st.session_state:
                 st.session_state["models"] = []
 
-            model_name = "mnist_neural_network"
+            # model_name = "mnist_neural_network"
             count = 1
-            new_model_name = model_name
+            new_model_name = run_name
+            # Đảm bảo st.session_state["models"] đã được khởi tạo từ trước
+            if "models" not in st.session_state:
+                st.session_state["models"] = []
             while any(m["name"] == new_model_name for m in st.session_state["models"]):
-                new_model_name = f"{model_name}_{count}"
+                new_model_name = f"{run_name}_{count}"
                 count += 1
 
+            # Lưu mô hình với tên đã chỉnh sửa
             st.session_state["models"].append(
                 {"name": new_model_name, "model": model})
-            st.write(f"**Mô hình đã được lưu với tên:** `{new_model_name}`")
+
+            st.write(f"**Mô hình đã được lưu với tên:** {new_model_name}")
 
             st.success(f"✅ Huấn luyện hoàn tất!")
             st.success(

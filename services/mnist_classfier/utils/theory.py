@@ -46,21 +46,21 @@ def mnist_dataset():
 
     with col2:
         st.markdown("""
-            **MNIST (Modified National Institute of Standards and Technology)** là một trong 
-            những tập dữ liệu phổ biến nhất trong lĩnh vực nhận dạng chữ số viết tay. Đây 
-            là một tập dữ liệu tiêu chuẩn để huấn luyện và đánh giá các mô hình machine 
+            **MNIST (Modified National Institute of Standards and Technology)** là một trong
+            những tập dữ liệu phổ biến nhất trong lĩnh vực nhận dạng chữ số viết tay. Đây
+            là một tập dữ liệu tiêu chuẩn để huấn luyện và đánh giá các mô hình machine
             learning (ML) và deep learning (DL), đặc biệt là các mô hình nhận dạng hình ảnh.
-        
+
             MNIST gồm 70.000 ảnh chữ số viết tay với kích thước ảnh 28x28 pixel, ảnh grayscale(đen trắng, 1 kênh màu)
             - 60.000 ảnh dùng để huấn luyện (training set)
             - 10.000 ảnh dùng để đánh giá (test set)
-                         
+
             - Số lớp (số nhãn): 10 (các chữ số từ 0 đến 9)
 
             Mỗi ảnh được biểu diễn dưới dạng ma trận 28x28
 
-            Ta sẽ chuẩn hóa dữ liệu, đưa giá trị pixel ban đầu nằm trong khoảng [0, 255], 
-            cần chia cho 255.0 để đưa về khoảng [0,1]                        
+            Ta sẽ chuẩn hóa dữ liệu, đưa giá trị pixel ban đầu nằm trong khoảng [0, 255],
+            cần chia cho 255.0 để đưa về khoảng [0,1]
         """)
 
     # Visualize target distribution
@@ -141,15 +141,15 @@ def decision_tree_theory():
         st.latex(
             r"\text{IG} = \text{Entropy(parent)} - \sum_{j} \frac{N_j}{N} \text{Entropy(child}_j\text{)}")
 
-        st.write("#### Mean Squared Error (Hồi quy)")
+        # st.write("#### Mean Squared Error (Hồi quy)")
 
-        st.latex(r"\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \bar{y})^2")
+        # st.latex(r"\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \bar{y})^2")
 
-        st.markdown(r"""
-        - $y_i$: Giá trị thực tế.
-                    
-        - $\bar{y}$: Giá trị trung bình.
-                    
+        # st.markdown(r"""
+        # - $y_i$: Giá trị thực tế.
+
+        # - $\bar{y}$: Giá trị trung bình.
+
         """)
 
     # # Phần 4: Ví dụ minh họa
@@ -181,12 +181,150 @@ def decision_tree_theory():
 
 
 def svm_theory():
-    pass
+    st.markdown(r"""
+    ## Support Vector Machine - SVM
+
+    ### 1. Tổng quan
+
+    **Máy Vector Hỗ trợ (SVM)** là một thuật toán học máy có giám sát, được sử dụng chủ yếu cho các bài toán phân loại (classification) và có thể mở rộng cho hồi quy (regression). SVM được phát triển bởi Vladimir Vapnik và các cộng sự vào những năm 1990. Ý tưởng chính của SVM là tìm một **siêu phẳng (hyperplane)** phân tách tốt nhất giữa các lớp dữ liệu, sao cho khoảng cách từ siêu phẳng đến các điểm dữ liệu gần nhất của mỗi lớp (gọi là **support vectors**) là lớn nhất.
+
+    Một số khái niệm cơ bản trong SVM:
+
+    - **Siêu phẳng**: Trong không gian $n$-chiều, siêu phẳng được định nghĩa bởi phương trình """)
+
+    st.latex(r"w^T x + b = 0 ")
+
+    st.markdown(r"""
+    Trong đó:
+
+    $w$ là vector pháp tuyến
+
+    $x$ là điểm trong không gian
+
+    $b$ là hệ số tự do.
+
+    - Ví dụ: Trong không gian 2 chiều, siêu phẳng là một đường thẳng; trong không gian 3 chiều, siêu phẳng là một mặt phẳng.
+    - **Support Vectors**: Các điểm dữ liệu nằm gần nhất với siêu phẳng phân tách, đóng vai trò quan trọng trong việc xác định vị trí và hướng của siêu phẳng.
+    - **Margin**: Khoảng cách từ siêu phẳng đến support vectors. SVM tìm siêu phẳng sao cho margin này là lớn nhất.
+
+    SVM có thể xử lý cả dữ liệu **tuyến tính phân tách** và **không tuyến tính phân tách** nhờ sử dụng **kernel trick**, giúp ánh xạ dữ liệu lên không gian chiều cao hơn để phân tách dễ dàng hơn.
+
+    ---
+
+    ### 2. Nguyên lý hoạt động
+
+    SVM hoạt động dựa trên việc tối ưu hóa siêu phẳng phân tách giữa các lớp dữ liệu. Có hai trường hợp chính: dữ liệu **tuyến tính phân tách** và **không tuyến tính phân tách**.
+
+    #### 2.1. Trường hợp tuyến tính phân tách (Hard Margin SVM)
+
+    **Mục tiêu**: Tìm siêu phẳng phân tách sao cho **margin** giữa các lớp là lớn nhất.
+
+    Giả sử tập dữ liệu $(x_i, y_i)_{i=1}^N$, với $x_i \in \mathbb{R}^n$ là vector đặc trưng và $y_i \in \{-1, 1\}$ là nhãn lớp.
+    Siêu phẳng phân tách được biểu diễn bởi:""")
+
+    st.latex(r"w^T x + b = 0")
+
+    st.markdown(r"Để phân tách đúng, các điểm dữ liệu phải thỏa mãn:")
+
+    st.latex(r"y_i (w^T x_i + b) \geq 1 \quad \forall i")
+
+    st.markdown(r"**Margin** được tính bằng:")
+
+    st.latex(r"\text{Margin} = \frac{2}{\|w\|}")
+
+    st.markdown(
+        r"SVM tìm $w$ và $b$ để tối đa hóa margin, tức là tối thiểu hóa $\frac{1}{2} \|w\|^2$, với ràng buộc:")
+
+    st.latex(r"\text{Minimize} \quad \frac{1}{2} \|w\|^2")
+
+    st.latex(
+        r"\text{Subject to} \quad y_i (w^T x_i + b) \geq 1 \quad \forall i")
+
+    st.markdown(r"""
+
+    #### 2.2. Trường hợp không tuyến tính phân tách (Soft Margin SVM)
+
+    Khi dữ liệu không thể phân tách tuyến tính hoàn toàn, SVM sử dụng **Soft Margin** để cho phép một số điểm bị phân
+    loại sai hoặc nằm trong margin. SVM các biến slack $\xi_i \geq 0$ và điều chỉnh bài toán tối ưu:""")
+
+    st.latex(
+        r"\text{Minimize} \quad \frac{1}{2} \|w\|^2 + C \sum_{i=1}^N \xi_i")
+
+    st.latex(
+        r"\text{Subject to} \quad y_i (w^T x_i + b) \geq 1 - \xi_i, \quad \xi_i \geq 0 \quad \forall i")
+
+    st.markdown(r"""
+
+    Trong đó $C$ là tham số điều chỉnh, cân bằng giữa tối đa hóa margin và giảm thiểu lỗi phân loại.
+                
+    $C$ lớn: Ưu tiên giảm lỗi phân loại, dẫn đến margin nhỏ hơn (ít khoan dung với lỗi).
+                
+    $C$ nhỏ: Ưu tiên tối đa hóa margin, chấp nhận nhiều lỗi hơn.
+                
+    **Biến slack $\xi_i$** đo lường mức độ vi phạm của điểm dữ liệu $x_i$ đối với điều kiện margin:
+    - $\xi_i = 0$: Điểm $x_i$ được phân loại đúng và nằm ngoài margin (hoặc trên ranh giới margin).
+    - $0 < \xi_i \leq 1 $: Điểm $x_i$ nằm trong margin nhưng vẫn được phân loại đúng.
+    - $\xi_i > 1$: Điểm $x_i$ bị phân loại sai (nằm ở phía sai của siêu phẳng phân tách).
+
+    Biến slack giúp SVM linh hoạt hơn, cho phép xử lý dữ liệu có nhiễu hoặc các điểm ngoại lai, đồng thời cân bằng giữa việc tối đa hóa margin và giảm thiểu lỗi phân loại thông qua tham số $C$.
+
+    #### 2.3. Dữ liệu không tuyến tính (Kernel Trick)
+
+    Khi dữ liệu không thể phân tách tuyến tính trong không gian ban đầu, SVM sử dụng **kernel trick** để ánh xạ dữ liệu lên không gian chiều cao hơn. Một số kernel phổ biến:
+
+    - **Linear Kernel**: $K(x_i, x_j) = x_i^T x_j$
+    - **Polynomial Kernel**: $K(x_i, x_j) = (x_i^T x_j + 1)^d$
+    - **RBF Kernel (Gaussian)**: $K(x_i, x_j) = \exp\left(-\gamma \|x_i - x_j\|^2\right)$
+
+    Bài toán tối ưu được chuyển sang dạng đối ngẫu:""")
+
+    st.latex(r"\text{Maximize} \quad \sum_{i=1}^N \alpha_i - \frac{1}{2} \sum_{i=1}^N \sum_{j=1}^N \alpha_i \alpha_j y_i y_j K(x_i, x_j)")
+
+    st.latex(
+        r"\text{Subject to} \quad \sum_{i=1}^N \alpha_i y_i = 0, \quad 0 \leq \alpha_i \leq C \quad \forall i")
+
+    st.markdown(
+        r"""Siêu phẳng phân tách được xây dựng dựa trên các support vectors (các điểm có $\alpha_i > 0$)
+    """)
+
+    st.markdown(r"""
+    ### 3. Ưu điểm của SVM
+    
+    - Hiệu quả cao: SVM hoạt động rất tốt trên các bài toán phân loại, đặc biệt khi dữ liệu có số chiều lớn (như MNIST).
+    
+    - Khả năng tổng quát hóa tốt: Nhờ tối đa hóa margin, SVM ít bị overfitting (nếu tham số C được chọn phù hợp).
+    
+    - Linh hoạt với kernel: Có thể xử lý dữ liệu không tuyến tính phân tách bằng cách sử dụng kernel trick.
+    
+    - Chỉ phụ thuộc vào support vectors: SVM không bị ảnh hưởng bởi các điểm dữ liệu xa siêu phẳng, giúp giảm nhạy cảm với nhiễu.
+""")
+
+    st.markdown(r"""
+    ### 4. Nhược điểm của SVM
+                
+    - Tốn tài nguyên tính toán: SVM có độ phức tạp tính toán cao không phù hợp với tập dữ liệu rất lớn.
+    
+    - Nhạy cảm với tham số: Hiệu suất của SVM phụ thuộc nhiều vào việc chọn C, gamma, và loại kernel.
+    
+    - Khó xử lý dữ liệu không chuẩn hóa: SVM nhạy cảm với tỷ lệ của dữ liệu, cần chuẩn hóa (scaling) trước khi huấn luyện.
+""")
+
+
+def full_theory():
+    option = st.selectbox(
+        'Chọn phương pháp giải thích:',
+        ('DecisionTree', 'SVM')
+    )
+
+    if option == 'DecisionTree':
+        decision_tree_theory()
+    elif option == 'SVM':
+        svm_theory()
 
 
 def theory_info():
     st.title("Thông tin về các thuật toán")
     st.markdown("""
     - Decision Tree: Thuật toán dự đoán giá trị đầu ra dựa trên các cây quyết định.
-    - Support Vector Machine (SVM): Thuật toán học máy tính đặc trưng (SVM) cho phân lớp hai hoặc nhiều lớp.
+    - Support Vector Machine(SVM): Thuật toán học máy tính đặc trưng(SVM) cho phân lớp hai hoặc nhiều lớp.
     """)

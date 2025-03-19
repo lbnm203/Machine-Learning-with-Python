@@ -21,7 +21,7 @@ def mlflow_input():
     os.environ["MLFLOW_TRACKING_USERNAME"] = "lbnm203"
     os.environ["MLFLOW_TRACKING_PASSWORD"] = "0902d781e6c2b4adcd3cbf60e0f288a8085c5aab"
 
-    mlflow.set_experiment("MNIST_Classification")
+    mlflow.set_experiment("MNIST_Classifier")
 
 
 def train_process(X, y):
@@ -31,7 +31,8 @@ def train_process(X, y):
     total_samples = X.shape[0]
 
     # Thanh kéo chọn số lượng ảnh để train
-    num_samples = st.slider("Chọn số lượng ảnh để train:", 1000, total_samples, 10000)
+    num_samples = st.slider("Chọn số lượng ảnh để train:",
+                            1000, total_samples, 10000)
 
     # Kiểm tra và điều chỉnh num_samples
     if num_samples >= total_samples:
@@ -101,15 +102,15 @@ def train_process(X, y):
     model_choice = st.selectbox("Chọn mô hình:", ["Decision Tree", "SVM"])
 
     if model_choice == "Decision Tree":
-        st.markdown("""
-- **Tham số mô hình:**  
-    - **max_depth**: Độ sâu tối đa của cây. """, help="""
+        st.markdown(""" 
+- **max_depth**: Độ sâu tối đa của cây. """, help="""
 - **Giá trị nhỏ (3 - 7)**: Tránh overfitting nhưng có thể underfitting.  
     - Cây chỉ học được những đặc trưng đơn giản, không đi sâu vào các mẫu dữ liệu phức tạp.
 - **Giá trị lớn (>= 10)**: Dễ bị overfitting vì khó học được các mẫu phức tạp trong dữ liệu 
     - Cây sẽ có khả năng học rất chi tiết các mẫu trong dữ liệu, bao gồm cả nhiễu (noise).
             """)
-        st.markdown("""- criterion: xác định cách thức cây quyết định chọn thuộc tính để phân nhánh""", help="""
+        st.markdown("""
+- **criterion:** xác định cách thức cây quyết định chọn thuộc tính để phân nhánh""", help="""
 - Gini:
     - Mục tiêu của Gini là chọn thuộc tính phân nhánh sao cho dữ liệu sau khi chia có độ thuần khiết cao nhất.
     - Nếu một node chỉ chứa mẫu của một lớp duy nhất, giá trị Gini sẽ là 0 (thuần khiết hoàn toàn).
@@ -119,26 +120,24 @@ def train_process(X, y):
     - Entropy càng cao ⟶ Dữ liệu càng hỗn loạn (ít thuần khiết).
     - Entropy càng thấp ⟶ Dữ liệu càng thuần khiết.
  """)
-        st.markdown("- min_samples_leaf (Số lượng mẫu tối thiểu trong mỗi lá) ", help="""
-- Mục tiêu là quy định số lượng mẫu nhỏ nhất mà một node lá có thể có.
-- Nếu một node có ít hơn min_samples_leaf mẫu, nó sẽ bị hợp nhất với node cha thay vì trở thành một node lá.
-- Giúp tránh overfitting bằng cách ngăn cây quyết định quá phức tạp.
-""")
+#         st.markdown("- min_samples_leaf (Số lượng mẫu tối thiểu trong mỗi lá) ", help="""
+# - Mục tiêu là quy định số lượng mẫu nhỏ nhất mà một node lá có thể có.
+# - Nếu một node có ít hơn min_samples_leaf mẫu, nó sẽ bị hợp nhất với node cha thay vì trở thành một node lá.
+# - Giúp tránh overfitting bằng cách ngăn cây quyết định quá phức tạp.
+# """)
 
         max_depth = st.slider("max_depth", 1, 20, 5)
         criterion = st.selectbox("Chọn tiêu chí phân nhánh (criterion)", [
             "gini", "entropy"], index=0)
-        min_samples_leaf = st.slider(
-            "Số lượng mẫu tối thiểu trên mỗi lá (min_samples_leaf)", 1, 10, 2)
+        # min_samples_leaf = st.slider(
+        #     "Số lượng mẫu tối thiểu trên mỗi lá (min_samples_leaf)", 1, 10, 2)
+        min_samples_leaf = 5
         model = DecisionTreeClassifier(
             max_depth=max_depth, criterion=criterion, min_samples_leaf=min_samples_leaf)
 
     elif model_choice == "SVM":
         st.markdown("""
         - **Tham số mô hình:**  
-            - **C (Regularization)**: Hệ số điều chỉnh độ phạt lỗi.  
-                - **C nhỏ**: Mô hình đơn giản hơn, chấp nhận nhiều lỗi hơn.  
-                - **C lớn**: Mô hình cố gắng phân loại chính xác mọi điểm, nhưng dễ bị overfitting.  
             - **Kernel**: Hàm kernel trick giúp phân tách dữ liệu phi tuyến tính bằng cách ánh xạ dữ 
                 liệu vào không gian có nhiều chiều hơn.
                 - Linear: Mô hình dùng siêu phẳng tuyến tính để phân lớp.  
@@ -147,9 +146,9 @@ def train_process(X, y):
                 - Sigmoid: Mô phỏng hàm kích hoạt của mạng nơ-ron.
  
         """)
-        C = st.slider("C (Regularization)", 0.1, 10.0, 1.0)
+        # C = st.slider("C (Regularization)", 0.1, 10.0, 1.0)
         kernel = st.selectbox("Kernel", ["linear", "rbf", "poly", "sigmoid"])
-        model = SVC(C=C, kernel=kernel)
+        model = SVC(kernel=kernel)
 
     n_folds = st.slider("Chọn số folds Cross-Validation:",
                         min_value=2, max_value=10, value=3)
@@ -204,7 +203,7 @@ def train_process(X, y):
             if model_choice == "Decision Tree":
                 mlflow.log_param("max_depth", max_depth)
             elif model_choice == "SVM":
-                mlflow.log_param("C", C)
+                # mlflow.log_param("C", C)
                 mlflow.log_param("kernel", kernel)
 
             mlflow.log_metric("test_accuracy", acc)
@@ -241,43 +240,63 @@ def train_process(X, y):
         # st.success(f"✅ Độ chính xác: {acc:.4f}")
 
         # Lưu mô hình vào session_state dưới dạng danh sách nếu chưa có
+        # if "models" not in st.session_state:
+        #     st.session_state["models"] = []
+
+        # # Tạo tên mô hình dựa trên lựa chọn mô hình và kernel
+        # model_name = model_choice.lower().replace(" ", "_")
+        # if model_choice == "SVM":
+        #     model_name += f"_{kernel}"
+
+        # # Kiểm tra nếu tên mô hình đã tồn tại trong session_state
+        # existing_model = next(
+        #     (item for item in st.session_state["models"] if item["name"] == model_name), None)
+
+        # if existing_model:
+        #     # Tạo tên mới với số đếm phía sau
+        #     count = 1
+        #     new_model_name = f"{model_name}_{count}"
+
+        #     # Kiểm tra tên mới chưa tồn tại
+        #     while any(item["name"] == new_model_name for item in st.session_state["models"]):
+        #         count += 1
+        #         new_model_name = f"{model_name}_{count}"
+
+        #     # Sử dụng tên mới đã tạo
+        #     model_name = new_model_name
+
         if "models" not in st.session_state:
             st.session_state["models"] = []
 
-        # Tạo tên mô hình dựa trên lựa chọn mô hình và kernel
-        model_name = model_choice.lower().replace(" ", "_")
-        if model_choice == "SVM":
-            model_name += f"_{kernel}"
+        # if existing_model:
+            # model_name = "mnist_neural_network"
+        count = 1
+        new_model_name = run_name
+        # Đảm bảo st.session_state["models"] đã được khởi tạo từ trước
+        if "models" not in st.session_state:
+            st.session_state["models"] = []
+        while any(m["name"] == new_model_name for m in st.session_state["models"]):
+            new_model_name = f"{run_name}_{count}"
+            count += 1
 
-        # Kiểm tra nếu tên mô hình đã tồn tại trong session_state
-        existing_model = next(
-            (item for item in st.session_state["models"] if item["name"] == model_name), None)
+        # Lưu mô hình với tên đã chỉnh sửa
+        st.session_state["models"].append(
+            {"name": new_model_name, "model": model})
 
-        if existing_model:
-            # Tạo tên mới với số đếm phía sau
-            count = 1
-            new_model_name = f"{model_name}_{count}"
-
-            # Kiểm tra tên mới chưa tồn tại
-            while any(item["name"] == new_model_name for item in st.session_state["models"]):
-                count += 1
-                new_model_name = f"{model_name}_{count}"
-
-            # Sử dụng tên mới đã tạo
-            model_name = new_model_name
-            # st.warning(f"⚠️ Mô hình được lưu với tên là: {model_name}")
+        st.success(f"**Mô hình đã được lưu với tên:** {new_model_name}")
+        # st.warning(f"⚠️ Mô hình được lưu với tên là: {model_name}")
 
         # # Lưu mô hình vào danh sách với tên mô hình cụ thể
-        st.session_state["models"].append({"name": model_name, "model": model})
-        st.success(
-            f"Log dữ liệu **{st.session_state['models']}** thành công!")
+        # st.session_state["models"].append({"name": model_name, "model": model})
+        # st.success(
+        #     f"Log dữ liệu **{st.session_state['models']}** thành công!")
         # st.write(f"🔹 Mô hình đã được lưu với tên: {model_name}")
         # st.write(
         #     f"Tổng số mô hình hiện tại: {len(st.session_state['models'])}")
 
         # # In tên các mô hình đã lưu
         # st.write("📋 Danh sách các mô hình đã lưu:")
-        model_names = [model["name"] for model in st.session_state["models"]]
+        # model_names = [model["name"] for model in st.session_state["models"]]
         # # Hiển thị tên các mô hình trong một d
         # st.write(", ".join(model_names))
 
