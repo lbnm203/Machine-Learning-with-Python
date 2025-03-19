@@ -56,9 +56,12 @@ def preprocess_image(image):
 # Hàm chọn dữ liệu ban đầu dựa trên số lượng mẫu hoặc tỷ lệ
 
 
-def select_initial_data(X, y, labeled_ratio=0.01):
+def select_initial_data(X, y, labeled_ratio):
     X_selected = []
     y_selected = []
+
+    samples_per_digit = {}
+
     for digit in range(10):
         indices = np.where(y == digit)[0]
         # Đảm bảo ít nhất 1 mẫu mỗi class
@@ -67,7 +70,9 @@ def select_initial_data(X, y, labeled_ratio=0.01):
             indices, num_samples, replace=False)
         X_selected.append(X[selected_indices])
         y_selected.append(y[selected_indices])
-    return np.concatenate(X_selected), np.concatenate(y_selected)
+        samples_per_digit[digit] = len(selected_indices)
+
+    return np.concatenate(X_selected), np.concatenate(y_selected), samples_per_digit
 
 # Hàm hiển thị ví dụ ảnh được gán nhãn giả
 
@@ -170,10 +175,18 @@ def train_mnist_pseudo_labeling(X_full, y_full):
     # Bước 2: Lấy dữ liệu ban đầu (1% làm labeled)
     labeled_ratio = st.slider(
         "% Số mẫu gán nhãn", min_value=0.01, max_value=0.3, value=0.01, step=0.01)
-    X_labeled, y_labeled = select_initial_data(X_train, y_train, labeled_ratio)
+    X_labeled, y_labeled, samples_per_digit = select_initial_data(
+        X_train, y_train, labeled_ratio)
     y_labeled_cat = to_categorical(y_labeled, 10)
+    samples_df = pd.DataFrame(list(samples_per_digit.items()), columns=[
+                              'Nhãn', 'Tổng số mẫu được gán nhãn theo %'])
+    st.table(samples_df.T)
     st.write(
         f"Số mẫu được gán nhãn ban đầu ({labeled_ratio * 100}% mỗi class): {len(X_labeled)}")
+    st.write("Phân bố mẫu ban đầu theo chữ số:")
+    # samples_df = pd.DataFrame(list(samples_per_digit.items()), columns=[
+    #                           'Số', 'Mẫu được phân bố theo nhãn '])
+    # st.write(samples_df).T
 
     # Tạo tập dữ liệu chưa được gán nhãn (99% còn lại)
     labeled_indices = np.random.choice(
@@ -259,9 +272,21 @@ def train_mnist_pseudo_labeling(X_full, y_full):
             correct_ratios = []
             test_accuracies = []
             val_accuracies = []
+            iteration_data = []
             additional_epochs = 0  # Khởi tạo mặc định
             final_val_acc = 0.0  # Khởi tạo mặc định
             final_test_acc = 0.0  # Khởi tạo mặc định
+
+            # Thêm trạng thái ban đầu vào iteration_data
+            _, initial_val_acc = model.evaluate(X_val, y_val_cat, verbose=0)
+            _, initial_test_acc = model.evaluate(X_test, y_test_cat, verbose=0)
+            iteration_data.append({
+                "Vòng lặp": 0,
+                "Mẫu có nhãn": len(X_current),
+                "Mẫu không có nhãn": len(X_unlabeled),
+                "Số nhãn giả đúng": 0,
+                "Số mẫu gán đúng tích lũy": cumulative_correct_count
+            })
 
             # Tạo container để hiển thị tiến trình
             progress_container = st.empty()
@@ -292,6 +317,15 @@ def train_mnist_pseudo_labeling(X_full, y_full):
                     if len(X_unlabeled) == 0:
                         st.write(
                             "Không còn mẫu chưa gán nhãn để xử lý. Tiếp tục huấn luyện với tập hiện tại.")
+
+                        iteration_data.append({
+                            "Vòng lặp": iteration + 1,
+                            "Mẫu có nhãn": len(X_current),
+                            "Mẫu không có nhãn": 0,
+                            "Số nhãn giả đúng": 0,
+                            "Số mẫu gán đúng tích lũy": cumulative_correct_count
+                        })
+
                         labeled_counts.append(len(X_current))
                         unlabeled_counts.append(0)
                         cumulative_correct_counts.append(
@@ -333,6 +367,21 @@ def train_mnist_pseudo_labeling(X_full, y_full):
                     st.write(
                         f"Tỷ lệ nhãn giả đúng trong vòng lặp này: {correct_ratio:.4f}")
 
+                    if correct_count == 0:
+                        st.warning(
+                            "Không có mẫu nào vượt ngưỡng và được gán đúng trong vòng lặp này. Tiếp tục với dữ liệu hiện tại.")
+                        iteration_data.append({
+                            "Vòng l": iteration + 1,
+                            "Mẫu có nhãn": len(X_current),
+                            "Mẫu không có nhãn": len(X_unlabeled),
+                            "Số nhãn giả đúng": correct_count,
+                            "Số mẫu gán đúng tích lũy": cumulative_correct_count
+                        })
+                        labeled_counts.append(len(X_current))
+                        unlabeled_counts.append(len(X_unlabeled))
+                        iteration += 1
+                        continue
+
                     # Cảnh báo nếu tỷ lệ nhãn giả đúng thấp
                     if correct_ratio < 0.7 and iteration > 0:
                         st.warning(
@@ -363,6 +412,14 @@ def train_mnist_pseudo_labeling(X_full, y_full):
                     y_unlabeled_true = y_unlabeled_true[remaining_indices] if len(
                         remaining_indices) > 0 else np.array([])
 
+                    iteration_data.append({
+                        "Vòng lặp": iteration + 1,
+                        "Mẫu có nhãn": len(X_current),
+                        "Mẫu không có nhãn": len(X_unlabeled),
+                        "Số nhãn giả đúng": correct_count,
+                        "Số mẫu gán đúng tích lũy": cumulative_correct_count
+                    })
+
                     # Hiển thị ví dụ
                     display_pseudo_labeled_examples(
                         X_unlabeled, y_unlabeled_true, pseudo_labels, confidences, correct_and_confident_indices, iteration)
@@ -372,6 +429,8 @@ def train_mnist_pseudo_labeling(X_full, y_full):
                     unlabeled_counts.append(
                         len(X_unlabeled) if len(X_unlabeled) > 0 else 0)
                     iteration += 1
+
+            st.table(iteration_data)
 
             # Kiểm tra chính xác cuối cùng trên toàn bộ tập train
             final_predictions = model.predict(X_train)

@@ -26,43 +26,85 @@ def introduce_pca():
 
     # Phần 3: Các bước thực hiện PCA
     st.header("3. Các bước thực hiện PCA")
-    st.write("""
-    Để áp dụng PCA, chúng ta thực hiện theo các bước sau:
-    1. **Chuẩn hóa dữ liệu** (nếu cần): Đảm bảo dữ liệu có giá trị trung bình bằng 0 và độ lệch chuẩn bằng 1 (đặc biệt khi các biến có đơn vị khác nhau).
-    2. **Tính ma trận hiệp phương sai**: Xác định mức độ tương quan giữa các biến trong dữ liệu.
-    3. **Tính vectơ riêng và giá trị riêng**: Từ ma trận hiệp phương sai, tìm các hướng biến thiên chính.
-    4. **Sắp xếp vectơ riêng**: Theo thứ tự giảm dần của giá trị riêng.
-    5. **Chọn k vectơ riêng**: Lấy k vectơ có giá trị riêng lớn nhất để tạo ma trận chuyển đổi.
-    6. **Chiếu dữ liệu**: Biến đổi dữ liệu gốc sang không gian mới bằng ma trận chuyển đổi.
+    # st.write("""
+    # Để áp dụng PCA, chúng ta thực hiện theo các bước sau:
+    # 1. **Chuẩn hóa dữ liệu** (nếu cần): Đảm bảo dữ liệu có giá trị trung bình bằng 0 và độ lệch chuẩn bằng 1 (đặc biệt khi các biến có đơn vị khác nhau).
+    # 2. **Tính ma trận hiệp phương sai**: Xác định mức độ tương quan giữa các biến trong dữ liệu.
+    # 3. **Tính vectơ riêng và giá trị riêng**: Từ ma trận hiệp phương sai, tìm các hướng biến thiên chính.
+    # 4. **Sắp xếp vectơ riêng**: Theo thứ tự giảm dần của giá trị riêng.
+    # 5. **Chọn k vectơ riêng**: Lấy k vectơ có giá trị riêng lớn nhất để tạo ma trận chuyển đổi.
+    # 6. **Chiếu dữ liệu**: Biến đổi dữ liệu gốc sang không gian mới bằng ma trận chuyển đổi.
+    # """)
+    st.markdown("1. Tính vector kỳ vọng của toàn bộ dữ liệu")
+    st.latex(r"""
+    \bar{X} = \frac{1}{n} \sum_{i=1}^n X_i
     """)
 
-    # Phần 4: Công thức của PCA
-    st.header("4. Công thức toán học của PCA")
-    st.write("Dưới đây là các công thức chi tiết của PCA:")
-    st.latex(r"""
-    \text{Giả sử dữ liệu đầu vào là ma trận } X \text{ với kích thước } n \times p, 
-    \text{ trong đó } n \text{ là số mẫu và } p \text{ là số biến.}
-    """)
-    st.markdown(r"- **Ma trận hiệp phương sai** $\Sigma$ được tính bằng:")
-    st.latex(r"""
-    \Sigma = \frac{1}{n-1} (X - \bar{X})^T (X - \bar{X})
-    """)
     st.markdown(
-        r"Trong đó $\bar{X}$ là ma trận chứa giá trị trung bình của các biến.")
+        "2. Trừ mỗi điểm dữ liệu đi vector kỳ vọng của toàn bộ dữ liệu để được dữ liệu chuẩn hóa")
+    st.latex(r"""
+    \hat{X_i} = X_i - \bar{X}
+    """)
+
     st.markdown(
-        r"- **Vectơ riêng** $v_i$ và **giá trị riêng** $\lambda_i$ của $\Sigma$ thỏa mãn:")
+        r"3. Đặt $\hat{X}$ = [$\hat{x_1}, \hat{x_2}, ..., \hat{x_D}$] là ma trận dữ liệu chuẩn hóa, tính ma trận hiệp phương sai")
     st.latex(r"""
-    \Sigma v_i = \lambda_i v_i
+    S = \frac{1}{N} \hat{X} \hat{X}^T
     """)
+
+    st.markdown(r"4. Tính các giá trị riêng và vector riêng tương ứng có $l_2$ norm "
+                "bằng 1 của ma trận này, sắp xếp chúng theo thứ tự giảm dần của giá trị riêng")
+
+    st.markdown(r"5. Chọn $K$ vectơ riêng ứng với $K$ giá trị riêng lớn nhất để tạo ma trận chuyển đổi $U_k$ "
+                r"có các cột tạo thành một hệ trực giao. $K$ vectors này được gọi là các thành phần chính,"
+                r"tạo thành một không gian con gần với phân bố của dữ liệu ban đầu đã chuẩn hóa")
+
     st.markdown(
-        r"- **Ma trận chuyển đổi** $W$ được tạo từ $k$ vectơ riêng có giá trị riêng lớn nhất:")
-    st.latex(r"""
-    W = [v_1, v_2, \dots, v_k]
-    """)
-    st.markdown(r"- **Dữ liệu sau khi giảm chiều** $Y$ được tính bằng:")
-    st.latex(r"""
-    Y = X W
-    """)
+        r"6. Chiếu dữ liệu ban đầu đã chuẩn hóa $\hat{X}$ xuống không gian con tìm được")
+
+    st.markdown(
+        r"7. Dữ liệu sau khi chiếu chính là tọa độ của các điểm dữ liệu trên không gian mới")
+
+    st.latex("Z = U_k^T \hat{X}")
+
+    st.markdown("Dữ liệu ban đầu có thể tính được xấp xỉ theo dữ liệu mới bởi:")
+
+    st.latex(r"x \thickapprox U_k Z + \bar{x}")
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image("./services/mnist_pca_tsne/assets/pca_3.png")
+        st.caption(
+            "Minh họa thuật toán PCA"
+            " (https://dothanhblog.wordpress.com/2020/02/29/svd-pca-lda)")
+
+    # # Phần 4: Công thức của PCA
+    # st.header("4. Công thức toán học của PCA")
+    # st.write("Dưới đây là các công thức chi tiết của PCA:")
+    # st.latex(r"""
+    # \text{Giả sử dữ liệu đầu vào là ma trận } X \text{ với kích thước } n \times p,
+    # \text{ trong đó } n \text{ là số mẫu và } p \text{ là số biến.}
+    # """)
+    # st.markdown(r"- **Ma trận hiệp phương sai** $\Sigma$ được tính bằng:")
+    # st.latex(r"""
+    # \Sigma = \frac{1}{n-1} (X - \bar{X})^T (X - \bar{X})
+    # """)
+    # st.markdown(
+    #     r"Trong đó $\bar{X}$ là ma trận chứa giá trị trung bình của các biến.")
+    # st.markdown(
+    #     r"- **Vectơ riêng** $v_i$ và **giá trị riêng** $\lambda_i$ của $\Sigma$ thỏa mãn:")
+    # st.latex(r"""
+    # \Sigma v_i = \lambda_i v_i
+    # """)
+    # st.markdown(
+    #     r"- **Ma trận chuyển đổi** $W$ được tạo từ $k$ vectơ riêng có giá trị riêng lớn nhất:")
+    # st.latex(r"""
+    # W = [v_1, v_2, \dots, v_k]
+    # """)
+    # st.markdown(r"- **Dữ liệu sau khi giảm chiều** $Y$ được tính bằng:")
+    # st.latex(r"""
+    # Y = X W
+    # """)
 
     # Phần 5: Ứng dụng của PCA
     st.header("5. Ứng dụng của PCA")

@@ -31,8 +31,11 @@ def train_process(X, y):
     total_samples = X.shape[0]
 
     # Thanh kéo chọn số lượng ảnh để train
-    num_samples = st.slider("Chọn số lượng ảnh để train:",
-                            1000, total_samples, 10000)
+    num_samples = st.slider("Chọn số lượng ảnh để train:", 1000, total_samples, 10000)
+
+    # Kiểm tra và điều chỉnh num_samples
+    if num_samples >= total_samples:
+        num_samples = total_samples - 10  # Để lại ít nhất 1 mẫu cho tập test
 
     st.session_state.total_samples = num_samples
     # Thanh kéo chọn tỷ lệ Train/Test

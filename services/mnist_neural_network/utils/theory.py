@@ -11,7 +11,7 @@ def neural_network():
     st.write("## Kiến trúc")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.image("./services/mnist_neural_network/assets/nn_3.png")
+        st.image("./services/mnist_neural_network/assets/nn.jpg ")
         #  caption="""
         #  Minh họa mạng nơ ron trên tập dữ liệu MNIST
 
@@ -20,7 +20,7 @@ def neural_network():
         #  """)
         st.caption(
             "Minh họa kiến trúc mạng nơ ron"
-            "(https://www.v7labs.com/blog/neural-network-architectures-guide)")
+            "(https://www.geeksforgeeks.org/ml-architecture-and-learning-process-in-neural-network)")
     st.markdown("""
 Một mạng nơ ron thường bao gồm các lớp:
 - **Lớp đầu vào (Input layer)**: Nhận dữ liệu đầu vào. Mỗi nơ-ron đầu vào trong lớp tương ứng với một đặc trưng trong dữ liệu đầu vào.
@@ -82,23 +82,101 @@ hoặc tổn thất entropy chéo cho phân loại.
     st.markdown(r"""
         $\text{Trong đó:}$
 
-    - $L$ là hàm mất mát.
+        - $L$ là hàm mất mát.
 
-    - $N$ là số lượng mẫu.
+        - $N$ là số lượng mẫu.
 
-    - $y_i$ là nhãn thực tế.
+        - $y_i$ là nhãn thực tế.
 
-    - $\widehat{y}_i$ là dự đoán của mô hình.
+        - $\widehat{y}_i$ là dự đoán của mô hình.
 
 """)
 
     st.markdown("""
-- Tính toán độ dốc (gradient): Mạng tính toán độ dốc của hàm mất mát đối với từng trọng số (weight) và độ lệch (bias) trong mạng.
+---
+Tính toán độ dốc (gradient): Mạng tính toán độ dốc của hàm mất mát đối với từng trọng số (weight) và độ lệch (bias) trong mạng.
 Điều này liên quan đến việc áp dụng quy tắc chuỗi của phép tính để tìm ra mức độ mỗi phần của lỗi đầu ra có thể được
 quy cho từng trọng số và độ lệch.
 """)
 
+    st.markdown(r"""
+Trong quá trình lan truyền ngược, sau khi tính được hàm mất mát $L$, ta cần tính gradient của $L$ 
+đối với từng trọng số $w_i$ và độ lệch $b$ để cập nhật chúng theo hướng giảm thiểu hàm mất mát. 
+
+Giả sử:
+- $z = w_1 x_1 + w_2 x_2 + \dots + w_n x_n + b$ là đầu vào của hàm kích hoạt,
+- $a = \sigma(z)$ là đầu ra của hàm kích hoạt, với $\sigma$ là hàm kích hoạt.
+
+Theo quy tắc chuỗi, ta có công thức tính gradient như sau:
+""")
+
+    st.latex(r"""
+\frac{\partial L}{\partial w_i} = \frac{\partial L}{\partial a} \cdot \sigma'(z) \cdot x_i
+""")
+
+    st.markdown(r"""
+- Trong đó:
+- $\frac{\partial L}{\partial a}$ là gradient của hàm mất mát đối với đầu ra của neuron.
+- $\sigma'(z)$ là đạo hàm của hàm kích hoạt tại $z$.
+- $x_i$ là giá trị đầu vào tương ứng với trọng số $w_i$.
+
+Tương tự, đối với độ lệch $b$, ta có:
+""")
+
+    st.latex(r"""
+\frac{\partial L}{\partial b} = \frac{\partial L}{\partial a} \cdot \sigma'(z)
+""")
+
+    st.markdown(r"""
+    - Ta có đạo hàm của hàm kích hoạt phổ biến như sau:            
+
+    ##### Sigmoid
+
+    Hàm sigmoid:
+                
+    $\sigma(z) = \frac{1}{1 + e^{-z}}$
+
+    Đạo hàm của hàm sigmoid:
+                
+    $\sigma'(z) = \sigma(z) \times \bigl(1 - \sigma(z)\bigr)$
+    """, unsafe_allow_html=True)
+
+    # Hiển thị công thức của hàm ReLU
+    st.markdown(r"""
+    ##### ReLU (Rectified Linear Unit)
+
+    Hàm ReLU:
+                
+    $f(z) = \max(0, z)$
+
+
+    Đạo hàm của hàm ReLU:
+    
+    $f'(z) =
+    \begin{cases}
+    1, & \text{nếu } z > 0, \\
+    0, & \text{nếu } z \leq 0.
+    \end{cases}
+    $
+    """, unsafe_allow_html=True)
+
+    # Hiển thị công thức của hàm tanh
+    st.markdown(r"""
+    ##### Tanh
+
+    Hàm tanh:
+
+    $\tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}$
+
+
+    Đạo hàm của hàm tanh:
+
+    $\tanh'(z) = 1 - \tanh^2(z)$
+
+    """, unsafe_allow_html=True)
+
     st.markdown("""
+---
 - Cập nhật trọng số (weight): Sau khi tính toán độ dốc, trọng số và độ lệch được cập nhật bằng thuật toán tối ưu hóa như
 giảm độ dốc ngẫu nhiên (SGD). Các trọng số được điều chỉnh theo hướng ngược lại của độ dốc để giảm thiểu tổn thất.
 Kích thước của bước thực hiện trong mỗi lần cập nhật được xác định bởi tốc độ học.
@@ -117,6 +195,6 @@ Kích thước của bước thực hiện trong mỗi lần cập nhật đư�
 
     st.write("### 3. Lặp lại")
     st.markdown("""
-    Quá trình lan truyền về phía trước, tính toán tổn thất, lan truyền ngược và cập nhật trọng số này được lặp lại trong nhiều lần 
-    lặp lại trên tập dữ liệu. Theo thời gian, quá trình lặp lại này làm giảm tổn thất và dự đoán của mạng trở nên chính xác hơn.
+Quá trình lan truyền về phía trước, tính toán tổn thất, lan truyền ngược và cập nhật trọng số này được lặp lại trong nhiều lần 
+lặp lại trên tập dữ liệu. Theo thời gian, quá trình lặp lại này làm giảm tổn thất và dự đoán của mạng trở nên chính xác hơn.
 """)
